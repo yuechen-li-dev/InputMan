@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Stride" Version="4.3.0.2507" />
+    <PackageReference Include="Stride.Core.Mathematics" Version="4.3.0.2507" />
+    <PackageReference Include="Stride.Engine" Version="4.3.0.2507" />
+    <PackageReference Include="Stride.Input" Version="4.3.0.2507" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\InputMan.Core\InputMan.Core.csproj" />
+  </ItemGroup>
+
+</Project>
