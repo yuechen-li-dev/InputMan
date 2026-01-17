@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\InputMan.Core\InputMan.Core.csproj" />
+    <ProjectReference Include="..\InputMan.Core\InputMan.Core.csproj" />
   </ItemGroup>
 
 </Project>

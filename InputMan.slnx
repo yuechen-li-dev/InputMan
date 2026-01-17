@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="Inputman.StrideConn/Inputman.StrideConn.csproj" Id="75a2b29b-7023-4a81-bdf7-41bfe6fda88c" />
   <Project Path="src/InputMan.Core/InputMan.Core.csproj" />
+  <Project Path="src/Inputman.StrideConn/Inputman.StrideConn.csproj" />
   <Project Path="tests/InputMan.Core.Tests/InputMan.Core.Tests.csproj" />
 </Solution>
