@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/InputMan.Core/InputMan.Core.csproj" />
+  <Project Path="tests/InputMan.Core.Tests/InputMan.Core.Tests.csproj" />
+</Solution>
