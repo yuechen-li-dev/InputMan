@@ -1,10 +1,11 @@
 ﻿using InputMan.Core;
+using Silk.NET.SDL;
 using Stride.Core;
 using Stride.Core.DataSerializers;
 using Stride.Engine;
 using Stride.Games;
 using Stride.Input;
-using System.Collections.Generic;
+
 
 namespace InputMan.StrideConn;
 
@@ -12,7 +13,7 @@ namespace InputMan.StrideConn;
 /// Stride GameSystem that reads Stride input, builds an InputSnapshot, and ticks InputManEngine.
 /// Registers IInputMan into Game.Services.
 /// </summary>
-public sealed class StrideInputManSystem : GameSystemBase
+public sealed class StrideInputManSystem : GameSystem
 {
     private readonly InputManEngine _engine;
     private readonly InputManager _input;
@@ -27,13 +28,19 @@ public sealed class StrideInputManSystem : GameSystemBase
             ?? throw new InvalidOperationException("Stride InputManager service is missing.");
         _engine = new InputManEngine(profile);
 
+        //Push map to activate. TODO: maybe make it configuarble later.
+        _engine.PushMap(new ActionMapId("Gameplay"));
+
         // Register service
         services.AddService<IInputMan>(_engine);
 
         // Tick early so scripts can read stable state
-        UpdateOrder = -1000;
+        UpdateOrder = -1;
 
         RebuildWatchedControls(profile);
+        
+        //GO!
+        Enabled = true;
     }
 
     public override void Update(GameTime gameTime)

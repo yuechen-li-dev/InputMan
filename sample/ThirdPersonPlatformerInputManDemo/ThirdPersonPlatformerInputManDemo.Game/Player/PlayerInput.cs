@@ -1,7 +1,6 @@
-// Copyright (c) .NET Foundation and Contributors (https://dotnetfoundation.org/ & https://stride3d.net) and Silicon Studio Corp. (https://www.siliconstudio.co.jp)
-// Distributed under the MIT license. See the LICENSE.md file in the project root for more information.
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using InputMan.Core;
 using Stride.Core.Mathematics;
 using Stride.Engine;
 using Stride.Engine.Events;
@@ -17,93 +16,110 @@ namespace ThirdPersonPlatformerInputManDemo.Player
         /// </summary>
         // TODO Should not be static, but allow binding between player and controller
         public static readonly EventKey<Vector3> MoveDirectionEventKey = new EventKey<Vector3>();
-
         public static readonly EventKey<Vector2> CameraDirectionEventKey = new EventKey<Vector2>();
-
         public static readonly EventKey<bool> JumpEventKey = new EventKey<bool>();
-        private bool jumpButtonDown = false;
+
+        // InputMan IDs (cache these so we don't allocate each frame)
+        private static readonly Axis2Id MoveAxis = new Axis2Id("Move");
+        private static readonly Axis2Id LookStickAxis = new Axis2Id("LookStick");
+        private static readonly Axis2Id LookMouseAxis = new Axis2Id("LookMouse");
+        private static readonly ActionId JumpAction = new ActionId("Jump");
+
+        private IInputMan _inputMan = null!;
 
         public float DeadZone { get; set; } = 0.25f;
 
         public CameraComponent Camera { get; set; }
 
+
+
         /// <summary>
-        /// Multiplies move movement by this amount to apply aim rotations
+        /// Multiplies mouse delta rotation by this amount.
         /// </summary>
         public float MouseSensitivity = 1f;
 
+        // These were used for old Stride polling; keep for now to avoid breaking serialized data.
+        // We can delete them once profile JSON drives bindings fully.
         public List<Keys> KeysLeft { get; } = new List<Keys>();
-
         public List<Keys> KeysRight { get; } = new List<Keys>();
-
         public List<Keys> KeysUp { get; } = new List<Keys>();
-
         public List<Keys> KeysDown { get; } = new List<Keys>();
-
         public List<Keys> KeysJump { get; } = new List<Keys>();
+
+        public override void Start()
+        {
+            // don't throw here; allow InstallInputMan to win the race
+            _inputMan = Game.Services.GetService<IInputMan>();
+        }
 
         public override void Update()
         {
-            // Character movement: should be camera-aware
+            _inputMan ??= Game.Services.GetService<IInputMan>();
+            if (_inputMan == null)
+                return;
+
+
+            DebugText.Print($"PI MoveY axis={_inputMan.GetAxis(new AxisId("\"MoveY\""))}", new Int2(10, 90));
+            // Debug: print what we are broadcasting
+
+            var m = _inputMan.GetAxis2(MoveAxis);
+            var world = new Vector3(m.X, 0f, m.Y);  // no deadzone, no camera
+
+            DebugText.Print($"PI world={world}", new Int2(10, 70));
+            MoveDirectionEventKey.Broadcast(world);
+
+
+            var dt = (float)Game.UpdateTime.Elapsed.TotalSeconds;
+
+            // 1) Character movement: camera-aware
             {
-                // Left stick: movement
-                var moveDirection = Input.GetLeftThumbAny(DeadZone);
+                // Move is logic-space X/Y (left/right, forward/back), already aggregated from bindings.
+                var moveDirection = _inputMan.GetAxis2(MoveAxis);
 
-                // Keyboard: movement
-                if (KeysLeft.Any(key => Input.IsKeyDown(key)))
-                    moveDirection += -Vector2.UnitX;
-                if (KeysRight.Any(key => Input.IsKeyDown(key)))
-                    moveDirection += +Vector2.UnitX;
-                if (KeysUp.Any(key => Input.IsKeyDown(key)))
-                    moveDirection += +Vector2.UnitY;
-                if (KeysDown.Any(key => Input.IsKeyDown(key)))
-                    moveDirection += -Vector2.UnitY;
-
-                // Broadcast the movement vector as a world-space Vector3 to allow characters to be controlled
-                var worldSpeed = (Camera != null)
-                    ? Utils.LogicDirectionToWorldDirection(moveDirection, Camera, Vector3.UnitY)
-                    : new Vector3(moveDirection.X, 0, moveDirection.Y);
-
-                // Adjust vector's magnitute - worldSpeed has been normalized
+                // Keep template behavior: apply deadzone shaping + rescale magnitude
                 var moveLength = moveDirection.Length();
-                var isDeadZoneLeft = moveLength < DeadZone;
-                if (isDeadZoneLeft)
+                if (moveLength < DeadZone)
                 {
-                    worldSpeed = Vector3.Zero;
+                    MoveDirectionEventKey.Broadcast(Vector3.Zero);
                 }
                 else
                 {
-                    if (moveLength > 1)
-                    {
-                        moveLength = 1;
-                    }
+                    if (moveLength > 1f)
+                        moveLength = 1f;
                     else
-                    {
                         moveLength = (moveLength - DeadZone) / (1f - DeadZone);
-                    }
+
+                    // Convert to world based on camera
+                    var worldSpeed = (Camera != null)
+                        ? Utils.LogicDirectionToWorldDirection(moveDirection, Camera, Vector3.UnitY)
+                        : new Vector3(moveDirection.X, 0, moveDirection.Y);
+
+                    // Template expects worldSpeed normalized before applying magnitude
+                    if (worldSpeed.LengthSquared() > 0f)
+                        worldSpeed.Normalize();
 
                     worldSpeed *= moveLength;
+                    MoveDirectionEventKey.Broadcast(worldSpeed);
                 }
-
-                MoveDirectionEventKey.Broadcast(worldSpeed);
             }
 
-            // Camera rotation: left-right rotates the camera horizontally while up-down controls its altitude
+            // 2) Camera rotation: stick + mouse delta (mouse only when locked)
             {
-                // Right stick: camera rotation
-                var cameraDirection = Input.GetRightThumbAny(DeadZone);
-                var isDeadZoneRight = cameraDirection.Length() < DeadZone;
-                if (isDeadZoneRight)
-                    cameraDirection = Vector2.Zero;
-                else
-                    cameraDirection.Normalize();
-                
-                // Contrary to a mouse, driving camera rotation from a stick must be scaled by delta time.
-                // The amount of camera rotation with a stick is constant over time based on the tilt of the stick,
-                // Whereas mouse driven rotation is already constrained by time, it is driven by the difference in position from last *time* to this *time*.
-                cameraDirection *= (float)this.Game.UpdateTime.Elapsed.TotalSeconds;
+                var stickN = _inputMan.GetAxis2(LookStickAxis); // System.Numerics.Vector2
+                var stick = new Stride.Core.Mathematics.Vector2(stickN.X, stickN.Y);
 
-                // Mouse-based camera rotation. Only enabled after you click the screen to lock your cursor, pressing escape cancels this
+                // Right stick: normalize (constant speed while tilted), then scale by dt
+                if (stick.Length() < DeadZone)
+                {
+                    stick = Vector2.Zero;
+                }
+                else
+                {
+                    stick.Normalize();
+                    stick *= dt;
+                }
+
+                // Mouse lock/unlock UX stays on Stride Input
                 if (Input.IsMouseButtonDown(MouseButton.Left))
                 {
                     Input.LockMousePosition(true);
@@ -114,25 +130,22 @@ namespace ThirdPersonPlatformerInputManDemo.Player
                     Input.UnlockMousePosition();
                     Game.IsMouseVisible = true;
                 }
+
+                // Mouse delta: only applied when locked. Also invert Y like original code.
+                var mouse = Vector2.Zero;
                 if (Input.IsMousePositionLocked)
                 {
-                    cameraDirection += new Vector2(Input.MouseDelta.X, -Input.MouseDelta.Y)*MouseSensitivity;
+                    var md = _inputMan.GetAxis2(LookMouseAxis);
+                    mouse = new Vector2(md.X, -md.Y) * MouseSensitivity;
                 }
 
-                // Broadcast the camera direction directly, as a screen-space Vector2
+                var cameraDirection = stick + mouse;
                 CameraDirectionEventKey.Broadcast(cameraDirection);
             }
 
-            // Jumping: don't bother with jump restrictions here, just pass the button states
+            // 3) Jump: just pressed edge
             {
-                // Controller: jumping
-                var isJumpDown = Input.IsGamePadButtonDownAny(GamePadButton.A);
-                var didJump = (!jumpButtonDown && isJumpDown);
-                jumpButtonDown = isJumpDown;
-
-                // Keyboard: jumping
-                didJump |= (KeysJump.Any(key => Input.IsKeyPressed(key)));
-
+                var didJump = _inputMan.WasPressed(JumpAction);
                 JumpEventKey.Broadcast(didJump);
             }
         }
