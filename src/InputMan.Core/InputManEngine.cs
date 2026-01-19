@@ -92,7 +92,7 @@ public sealed class InputManEngine : IInputMan
                 if (axisEvt.HasValue)
                 {
                     var a = axisEvt.Value.Axis;
-                    if (!_unclampedAxes.Contains(a))
+                    if (!_unclampedAxes.Contains(a)) //only clamp controller sticks, mouse is unclamped
                         _axes[a] = Clamp(_axes[a], -1f, 1f);
 
                     OnAxis?.Invoke(axisEvt.Value with { Value = _axes[a] });
