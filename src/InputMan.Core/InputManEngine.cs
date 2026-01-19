@@ -34,6 +34,8 @@ public sealed class InputManEngine : IInputMan
     private readonly HashSet<ControlKey> _consumedControls = [];
     private readonly HashSet<AxisId> _unclampedAxes = [];
 
+    private RebindSession? _rebind;
+
     public long FrameIndex { get; private set; }
     public float DeltaTimeSeconds { get; private set; }
     private float _timeSeconds;
@@ -53,6 +55,9 @@ public sealed class InputManEngine : IInputMan
         FrameIndex++;
         DeltaTimeSeconds = deltaTimeSeconds;
         _timeSeconds = timeSeconds;
+
+        // Let rebinding observe raw snapshot each frame
+        _rebind?.Update(snapshot, _timeSeconds);
 
         if (_activeMapsDirty)
             RebuildActiveMapsSorted();
@@ -169,7 +174,60 @@ public sealed class InputManEngine : IInputMan
     }
 
     public IRebindSession StartRebind(RebindRequest request)
-        => throw new NotSupportedException("Rebinding session will be implemented in milestone M4.");
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+        if (request.Map.Name.Length == 0) throw new ArgumentException("Map must be set.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.BindingNameOrSlot))
+            throw new ArgumentException("BindingNameOrSlot must be set.", nameof(request));
+
+        // Cancel any existing session
+        _rebind?.Cancel();
+
+        // Resolve map
+        if (!_profile.Maps.TryGetValue(request.Map.Name, out var mapDef))
+            throw new InvalidOperationException($"Map '{request.Map.Name}' not found in profile.");
+
+        // Resolve binding by name, or slot index
+        int bindingIndex = mapDef.Bindings.FindIndex(b =>
+            string.Equals(b.Name, request.BindingNameOrSlot, StringComparison.Ordinal));
+
+        if (bindingIndex < 0 && int.TryParse(request.BindingNameOrSlot, out var slot))
+        {
+            if ((uint)slot < (uint)mapDef.Bindings.Count)
+                bindingIndex = slot;
+        }
+
+        if (bindingIndex < 0)
+            throw new InvalidOperationException(
+                $"Binding '{request.BindingNameOrSlot}' not found in map '{request.Map.Name}'.");
+
+        var binding = mapDef.Bindings[bindingIndex];
+
+        // Capture only controls already referenced by the profile (fast + deterministic)
+        var knownButtons = _knownButtonControls.ToArray();
+        var knownAxes = _knownAxisControls.ToArray();
+
+        var session = new RebindSession(
+            engine: this,
+            request: request,
+            mapDef: mapDef,
+            bindingIndex: bindingIndex,
+            binding: binding,
+            knownButtons: knownButtons,
+            knownAxes: knownAxes,
+            startTimeSeconds: _timeSeconds);
+
+        _rebind = session;
+
+        // When it completes, drop it if it's still the active one
+        session.OnCompleted += _ =>
+        {
+            if (ReferenceEquals(_rebind, session))
+                _rebind = null;
+        };
+
+        return session;
+    }
 
     public InputProfile ExportProfile() => _profile;
 
@@ -354,6 +412,14 @@ public sealed class InputManEngine : IInputMan
         if (v < min) return min;
         if (v > max) return max;
         return v;
+    }
+
+    //Helper function for rebind.
+    internal void RebuildKnownControlsFromRebind()
+    {
+        RebuildKnownControls();
+        // Optional but nice: force edges to be sane after rebinding
+        _prevButtons.Clear();
     }
 
     private readonly record struct ActionState(bool Down, bool PressedThisFrame, bool ReleasedThisFrame);

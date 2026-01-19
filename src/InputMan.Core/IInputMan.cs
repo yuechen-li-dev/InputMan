@@ -22,7 +22,7 @@ public interface IInputMan
     event Action<ActionEvent>? OnAction;
     event Action<AxisEvent>? OnAxis;
 
-    // Rebinding will be implemented in M4; kept here so the API is stable.
+    // Rebinding
     IRebindSession StartRebind(RebindRequest request);
 
     InputProfile ExportProfile();
