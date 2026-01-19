@@ -417,3 +417,4 @@ FodyWeavers.xsd
 *.msm
 *.msp
 /sample/ThirdPersonPlatformerInputManDemo
+/sample/ThirdPersonPlatformerInputManDemo/ThirdPersonPlatformerInputManDemo.Game/ThirdPersonPlatformerInputManDemo.Game.sdpkg

@@ -25,6 +25,9 @@ namespace ThirdPersonPlatformerInputManDemo.Player
         private static readonly Axis2Id LookStickAxis = new Axis2Id("LookStick");
         private static readonly Axis2Id LookMouseAxis = new Axis2Id("LookMouse");
         private static readonly ActionId JumpAction = new ActionId("Jump");
+        private static readonly ActionId LookLockAction = new("LookLock");   // e.g. LMB
+        private static readonly ActionId LookUnlockAction = new("LookUnlock"); // e.g. Escape
+
 
         private IInputMan _inputMan = null!;
 
@@ -38,14 +41,6 @@ namespace ThirdPersonPlatformerInputManDemo.Player
         /// Multiplies mouse delta rotation by this amount.
         /// </summary>
         public float MouseSensitivity = 1f;
-
-        // These were used for old Stride polling; keep for now to avoid breaking serialized data.
-        // We can delete them once profile JSON drives bindings fully.
-        public List<Keys> KeysLeft { get; } = new List<Keys>();
-        public List<Keys> KeysRight { get; } = new List<Keys>();
-        public List<Keys> KeysUp { get; } = new List<Keys>();
-        public List<Keys> KeysDown { get; } = new List<Keys>();
-        public List<Keys> KeysJump { get; } = new List<Keys>();
 
         public override void Start()
         {
@@ -110,12 +105,14 @@ namespace ThirdPersonPlatformerInputManDemo.Player
                 }
 
                 // Mouse lock/unlock UX stays on Stride Input
-                if (Input.IsMouseButtonDown(MouseButton.Left))
+                // Cursor lock/unlock is still an engine/window side-effect,
+                // but the *decision* comes from InputMan actions.
+                if (_inputMan.IsDown(LookLockAction))
                 {
                     Input.LockMousePosition(true);
                     Game.IsMouseVisible = false;
                 }
-                if (Input.IsKeyPressed(Keys.Escape))
+                if (Input.IsKeyPressed(Keys.Escape)) //TODO: Get LookUnlockAction working too. 
                 {
                     Input.UnlockMousePosition();
                     Game.IsMouseVisible = true;
