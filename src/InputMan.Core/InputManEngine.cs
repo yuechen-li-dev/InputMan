@@ -32,6 +32,7 @@ public sealed class InputManEngine : IInputMan
 
     // Consumption within the current frame
     private readonly HashSet<ControlKey> _consumedControls = [];
+    private readonly HashSet<AxisId> _unclampedAxes = [];
 
     public long FrameIndex { get; private set; }
     public float DeltaTimeSeconds { get; private set; }
@@ -40,7 +41,6 @@ public sealed class InputManEngine : IInputMan
     public event Action<ActionEvent>? OnAction;
     public event Action<AxisEvent>? OnAxis;
 
-    private readonly HashSet<AxisId> _unclampedAxes = [];
 
     public InputManEngine(InputProfile? profile = null)
     {
@@ -87,10 +87,6 @@ public sealed class InputManEngine : IInputMan
                 // Handle Action Events
                 if (actionEvt.HasValue)
                     OnAction?.Invoke(actionEvt.Value);
-
-                //Unclamp any binding with DeltaAxis so mouse flicks doesn't feel sticky
-                if (binding.Trigger.Type == TriggerType.DeltaAxis && binding.Output is AxisOutput ax)
-                    _unclampedAxes.Add(ax.Axis);
 
                 // Handle Axis Events
                 if (axisEvt.HasValue)
@@ -203,6 +199,8 @@ public sealed class InputManEngine : IInputMan
         var trig = binding.Trigger;
         var control = trig.Control;
 
+
+
         // -----------------------------
         // Axis / DeltaAxis triggers
         // -----------------------------
@@ -212,7 +210,13 @@ public sealed class InputManEngine : IInputMan
             var AxisValue = snapshot.TryGetAxis(control, out var v) ? v : 0f;
 
             // Threshold is optional; default 0 means "any non-zero"
-            didTrigger = MathF.Abs(AxisValue) > trig.Threshold;
+
+            didTrigger = trig.Type switch
+            {
+                TriggerType.Axis => MathF.Abs(AxisValue) > trig.Threshold, // deadzone makes sense
+                TriggerType.DeltaAxis => AxisValue != 1e7f,                       // ignore threshold by default, accounting for float noise.
+                _ => false
+            };
 
             // For now, only AxisOutput is supported for axis-based triggers
             if (!didTrigger || binding.Output is not AxisOutput AxisOut)
@@ -305,6 +309,14 @@ public sealed class InputManEngine : IInputMan
         _knownAxisControls.UnionWith(
             allBindings.Where(b => b.Trigger.Type != TriggerType.Button)
                        .Select(b => b.Trigger.Control)
+        );
+
+        // 3b. Axes that should NOT be clamped (any axis driven by DeltaAxis)
+        _unclampedAxes.Clear();
+        _unclampedAxes.UnionWith(
+            allBindings
+                .Where(b => b.Trigger.Type == TriggerType.DeltaAxis && b.Output is AxisOutput)
+                .Select(b => ((AxisOutput)b.Output).Axis)
         );
 
         // 4. Ensure previous state tracking exists for all button controls
