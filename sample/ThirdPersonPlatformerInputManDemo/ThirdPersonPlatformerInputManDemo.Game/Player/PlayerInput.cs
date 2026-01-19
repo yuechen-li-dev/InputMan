@@ -1,11 +1,12 @@
-using System;
 using System.Collections.Generic;
 using InputMan.Core;
-using Stride.Core.Mathematics;
 using Stride.Engine;
 using Stride.Engine.Events;
 using Stride.Input;
 using ThirdPersonPlatformerInputManDemo.Core;
+using Vector2 = Stride.Core.Mathematics.Vector2;
+using Vector3 = Stride.Core.Mathematics.Vector3;
+
 
 namespace ThirdPersonPlatformerInputManDemo.Player
 {
@@ -58,17 +59,6 @@ namespace ThirdPersonPlatformerInputManDemo.Player
             if (_inputMan == null)
                 return;
 
-
-            DebugText.Print($"PI MoveY axis={_inputMan.GetAxis(new AxisId("\"MoveY\""))}", new Int2(10, 90));
-            // Debug: print what we are broadcasting
-
-            var m = _inputMan.GetAxis2(MoveAxis);
-            var world = new Vector3(m.X, 0f, m.Y);  // no deadzone, no camera
-
-            DebugText.Print($"PI world={world}", new Int2(10, 70));
-            MoveDirectionEventKey.Broadcast(world);
-
-
             var dt = (float)Game.UpdateTime.Elapsed.TotalSeconds;
 
             // 1) Character movement: camera-aware
@@ -106,7 +96,7 @@ namespace ThirdPersonPlatformerInputManDemo.Player
             // 2) Camera rotation: stick + mouse delta (mouse only when locked)
             {
                 var stickN = _inputMan.GetAxis2(LookStickAxis); // System.Numerics.Vector2
-                var stick = new Stride.Core.Mathematics.Vector2(stickN.X, stickN.Y);
+                var stick = new Vector2(stickN.X, stickN.Y);
 
                 // Right stick: normalize (constant speed while tilted), then scale by dt
                 if (stick.Length() < DeadZone)

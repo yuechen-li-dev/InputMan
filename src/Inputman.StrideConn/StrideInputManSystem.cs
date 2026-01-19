@@ -2,9 +2,11 @@
 using Silk.NET.SDL;
 using Stride.Core;
 using Stride.Core.DataSerializers;
+using Stride.Core.Mathematics;
 using Stride.Engine;
 using Stride.Games;
 using Stride.Input;
+using System.Runtime.ConstrainedExecution;
 
 
 namespace InputMan.StrideConn;
@@ -22,7 +24,7 @@ public sealed class StrideInputManSystem : GameSystem
     private readonly HashSet<ControlKey> _watchedAxes = [];
 
     public StrideInputManSystem(IServiceRegistry services, InputProfile profile)
-        : base(services)
+    : base(services)
     {
         _input = services.GetService<InputManager>()
             ?? throw new InvalidOperationException("Stride InputManager service is missing.");
@@ -38,7 +40,7 @@ public sealed class StrideInputManSystem : GameSystem
         UpdateOrder = -1;
 
         RebuildWatchedControls(profile);
-        
+
         //GO!
         Enabled = true;
     }
@@ -49,6 +51,7 @@ public sealed class StrideInputManSystem : GameSystem
         var t = (float)gameTime.Total.TotalSeconds;
 
         var snapshot = StrideInputSnapshotBuilder.Build(_input, _watchedButtons, _watchedAxes);
+
         _engine.Tick(snapshot, dt, t);
     }
 

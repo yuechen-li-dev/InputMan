@@ -197,57 +197,86 @@ public sealed class InputManEngine : IInputMan
         var trig = binding.Trigger;
         var control = trig.Control;
 
-        if (trig.Type != TriggerType.Button) return false;
-
-        // 1. Determine state changes once
-        bool curDown = snapshot.TryGetButton(control, out var cur) && cur;
-        bool prevDown = _prevButtons.TryGetValue(control, out var prev) && prev;
-        bool isPressed = !prevDown && curDown;
-        bool isReleased = prevDown && !curDown;
-
-        // 2. Resolve the trigger firing state
-        didTrigger = trig.ButtonEdge switch
+        // -----------------------------
+        // Axis / DeltaAxis triggers
+        // -----------------------------
+        if (trig.Type is TriggerType.Axis or TriggerType.DeltaAxis)
         {
-            ButtonEdge.Down => curDown,
-            ButtonEdge.Pressed => isPressed,
-            ButtonEdge.Released => isReleased,
-            _ => false
-        };
+            // Axis values come from snapshot axes (StrideConn fills these)
+            var AxisValue = snapshot.TryGetAxis(control, out var v) ? v : 0f;
 
-        // 3. Handle ActionOutput
-        if (binding.Output is ActionOutput ao)
-        {
-            var existing = _actions.GetValueOrDefault(ao.Action);
+            // Threshold is optional; default 0 means "any non-zero"
+            didTrigger = MathF.Abs(AxisValue) > trig.Threshold;
 
-            // Determine new state and event phase via pattern matching
-            var (newState, phase) = (isPressed, isReleased) switch
-            {
-                (true, _) => (existing with { Down = true, PressedThisFrame = true }, ActionPhase.Pressed),
-                (_, true) => (existing with { Down = false, ReleasedThisFrame = true }, ActionPhase.Released),
-                _ => (existing with { Down = curDown }, (ActionPhase?)null)
-            };
+            // For now, only AxisOutput is supported for axis-based triggers
+            if (!didTrigger || binding.Output is not AxisOutput AxisOut)
+                return false;
 
-            _actions[ao.Action] = newState;
-            actionEvent = phase.HasValue
-                ? new ActionEvent(ao.Action, phase.Value, FrameIndex, _timeSeconds)
-                : null;
+            // Accumulate analog value scaled by binding scale
+            _axes[AxisOut.Axis] = _axes.GetValueOrDefault(AxisOut.Axis) + (AxisValue * AxisOut.Scale);
 
-            axisEvent = null;
+            axisEvent = new AxisEvent(AxisOut.Axis, _axes[AxisOut.Axis], FrameIndex, _timeSeconds);
             return true;
         }
 
-        // 4. Handle AxisOutput
-        if (binding.Output is AxisOutput ax)
+
+        // -----------------------------
+        // Button Triggers
+        // -----------------------------
+
+        else if (trig.Type is TriggerType.Button)
         {
-            // A simple boolean check: does the current state satisfy the trigger requirement?
-            if (!didTrigger || trig.ButtonEdge == ButtonEdge.Released)
-                return false;
+            // 1. Determine state changes once
+            bool curDown = snapshot.TryGetButton(control, out var cur) && cur;
+            bool prevDown = _prevButtons.TryGetValue(control, out var prev) && prev;
+            bool isPressed = !prevDown && curDown;
+            bool isReleased = prevDown && !curDown;
 
-            _axes[ax.Axis] = _axes.GetValueOrDefault(ax.Axis) + ax.Scale;
+            // 2. Resolve the trigger firing state
+            didTrigger = trig.ButtonEdge switch
+            {
+                ButtonEdge.Down => curDown,
+                ButtonEdge.Pressed => isPressed,
+                ButtonEdge.Released => isReleased,
+                _ => false
+            };
 
-            axisEvent = new AxisEvent(ax.Axis, _axes[ax.Axis], FrameIndex, _timeSeconds);
-            actionEvent = null;
-            return true;
+            // 3. Handle ActionOutput
+            if (binding.Output is ActionOutput ao)
+            {
+                var existing = _actions.GetValueOrDefault(ao.Action);
+
+                // Determine new state and event phase via pattern matching
+                var (newState, phase) = (isPressed, isReleased) switch
+                {
+                    (true, _) => (existing with { Down = true, PressedThisFrame = true }, ActionPhase.Pressed),
+                    (_, true) => (existing with { Down = false, ReleasedThisFrame = true }, ActionPhase.Released),
+                    _ => (existing with { Down = curDown }, (ActionPhase?)null)
+                };
+
+                _actions[ao.Action] = newState;
+                actionEvent = phase.HasValue
+                    ? new ActionEvent(ao.Action, phase.Value, FrameIndex, _timeSeconds)
+                    : null;
+
+                axisEvent = null;
+                return true;
+            }
+
+            // 4. Handle AxisOutput
+            if (binding.Output is AxisOutput ax)
+            {
+                // A simple boolean check: does the current state satisfy the trigger requirement?
+                if (!didTrigger || trig.ButtonEdge == ButtonEdge.Released)
+                    return false;
+
+                _axes[ax.Axis] = _axes.GetValueOrDefault(ax.Axis) + ax.Scale;
+
+                axisEvent = new AxisEvent(ax.Axis, _axes[ax.Axis], FrameIndex, _timeSeconds);
+                actionEvent = null;
+                return true;
+            }
+
         }
 
         return false;
