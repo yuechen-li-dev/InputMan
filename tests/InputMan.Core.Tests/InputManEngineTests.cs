@@ -176,4 +176,55 @@ public sealed class InputManEngineTests
         Assert.Equal(0f, im.GetAxis(moveY));
     }
 
+    [Fact]
+    public void DeltaAxis_IsNotClamped()
+    {
+        // Arrange
+        var lookX = new AxisId("LookMouseX");
+        var mapId = new ActionMapId("Gameplay");
+
+        var control = new ControlKey(DeviceKind.Mouse, DeviceIndex: 0, Code: 123); // any code is fine for core
+
+        var profile = new InputProfile
+        {
+            Maps = new Dictionary<string, ActionMapDefinition>
+            {
+                ["Gameplay"] = new ActionMapDefinition
+                {
+                    Id = mapId,
+                    Priority = 0,
+                    CanConsume = false,
+                    Bindings =
+                    [
+                        new Binding
+                    {
+                        Trigger = new BindingTrigger
+                        {
+                            Control = control,
+                            Type = TriggerType.DeltaAxis,
+                            Threshold = 0f,
+                        },
+                        Output = new AxisOutput(lookX, 1f),
+                    }
+                    ]
+                }
+            }
+        };
+
+        var engine = new InputManEngine(profile);
+        engine.SetMaps(mapId);
+
+        var snapshot = new InputSnapshot(
+            buttons: new Dictionary<ControlKey, bool>(),
+            axes: new Dictionary<ControlKey, float> { [control] = 5f }
+        );
+
+        // Act
+        engine.Tick(snapshot, deltaTimeSeconds: 1f / 60f, timeSeconds: 1f);
+
+        // Assert
+        Assert.Equal(5f, engine.GetAxis(lookX));
+    }
+
+
 }
