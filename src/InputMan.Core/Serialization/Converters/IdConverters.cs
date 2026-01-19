@@ -20,6 +20,8 @@ public static class IdConverters
         options.Converters.Add(new AxisIdJsonConverter());
         options.Converters.Add(new Axis2IdJsonConverter());
         options.Converters.Add(new ActionMapIdJsonConverter());
+        options.Converters.Add(new ControlKeyJsonConverter());
+        options.Converters.Add(new BindingOutputJsonConverter());
 
         return options;
     }
