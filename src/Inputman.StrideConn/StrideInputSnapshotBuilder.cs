@@ -12,6 +12,12 @@ public static class StrideInputSnapshotBuilder
         InputManager input,
         IReadOnlyCollection<ControlKey> watchedButtons,
         IReadOnlyCollection<ControlKey> watchedAxes)
+    => Build(new StrideInputSource(input), watchedButtons, watchedAxes);
+
+    public static InputSnapshot Build(
+    IStrideInputSource input,
+    IReadOnlyCollection<ControlKey> watchedButtons,
+    IReadOnlyCollection<ControlKey> watchedAxes)
     {
         var buttons = new Dictionary<ControlKey, bool>(watchedButtons.Count);
         var axes = new Dictionary<ControlKey, float>(Math.Max(16, watchedAxes.Count));
@@ -33,7 +39,7 @@ public static class StrideInputSnapshotBuilder
         return new InputSnapshot(buttons, axes);
     }
 
-    private static bool TryReadButton(InputManager input, in ControlKey key, out bool down)
+    private static bool TryReadButton(IStrideInputSource input, in ControlKey key, out bool down)
     {
         down = false;
 
@@ -46,7 +52,7 @@ public static class StrideInputSnapshotBuilder
         };
     }
 
-    private static bool TryReadAxis(InputManager input, in ControlKey key, out float value)
+    private static bool TryReadAxis(IStrideInputSource input, in ControlKey key, out float value)
     {
         value = 0f;
 
@@ -58,20 +64,20 @@ public static class StrideInputSnapshotBuilder
         };
     }
 
-    private static bool ReadKeyboard(InputManager input, in ControlKey key, out bool down)
+    private static bool ReadKeyboard(IStrideInputSource input, in ControlKey key, out bool down)
     {
         down = input.IsKeyDown((Keys)key.Code);
         return true;
     }
 
-    private static bool ReadMouseButton(InputManager input, in ControlKey key, out bool down)
+    private static bool ReadMouseButton(IStrideInputSource input, in ControlKey key, out bool down)
     {
         // For mouse BUTTONS, code is the Stride.MouseButton enum int.
         down = input.IsMouseButtonDown((MouseButton)key.Code);
         return true;
     }
 
-    private static bool ReadMouseAxis(InputManager input, in ControlKey key, out float value)
+    private static bool ReadMouseAxis(IStrideInputSource input, in ControlKey key, out float value)
     {
         // For mouse AXES, code is from StrideControlCodes.
         value = key.Code switch
@@ -85,7 +91,7 @@ public static class StrideInputSnapshotBuilder
         return true;
     }
 
-    private static float GetMouseWheelDelta(InputManager input)
+    private static float GetMouseWheelDelta(IStrideInputSource input)
     {
         // Stride versions differ slightly. If your InputManager exposes MouseWheelDelta as a float, use it.
         // If it’s an int, cast. If it’s a Vector2 or something else, adjust here.
@@ -93,33 +99,27 @@ public static class StrideInputSnapshotBuilder
         return input.MouseWheelDelta;
     }
 
-    private static bool ReadGamepadButton(InputManager input, in ControlKey key, out bool down)
+    private static bool ReadGamepadButton(IStrideInputSource input, in ControlKey key, out bool down)
     {
-        // For gamepad BUTTONS, code is Stride.GamePadButton enum int.
-        // We use DeviceIndex to select which gamepad.
-        var pad = GetGamePadByIndex(input, key.DeviceIndex);
-        if (pad == null)
+        if (!input.TryGetGamePadState(key.DeviceIndex, out var st))
         {
             down = false;
-            return true;
+            return true; // not connected => not down
         }
 
         var button = (GamePadButton)key.Code;
-        down = (pad.State.Buttons & button) == button;
+        down = (st.Buttons & button) == button;
         return true;
     }
 
-    private static bool ReadGamepadAxis(InputManager input, in ControlKey key, out float value)
+    private static bool ReadGamepadAxis(IStrideInputSource input, in ControlKey key, out float value)
     {
-        var pad = GetGamePadByIndex(input, key.DeviceIndex);
-        if (pad == null)
+        if (!input.TryGetGamePadState(key.DeviceIndex, out var st))
         {
             value = 0f;
-            return true;
+            return true; // not connected => 0
         }
 
-        // For gamepad AXES, code is from StrideControlCodes.
-        var st = pad.State;
         value = key.Code switch
         {
             StrideControlCodes.GamepadLeftX => st.LeftThumb.X,
@@ -134,22 +134,8 @@ public static class StrideInputSnapshotBuilder
         return true;
     }
 
-    private static IGamePadDevice? GetGamePadByIndex(InputManager input, int index)
-    {
-        // Stride API: returns IGamePadDevice
-        var pad = input.GetGamePadByIndex(index);
-        if (pad != null)
-            return pad;
-
-        // Fallback if needed (should usually be unnecessary)
-        foreach (var gp in input.GamePads)
-        {
-            if (gp.Index == index)
-                return gp;
-        }
-
-        return null;
-    }
+    private static bool TryGetGamePadState(IStrideInputSource input, int index, out GamePadState state)
+    => input.TryGetGamePadState(index, out state);
 }
 
 
