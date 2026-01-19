@@ -40,6 +40,8 @@ public sealed class InputManEngine : IInputMan
     public event Action<ActionEvent>? OnAction;
     public event Action<AxisEvent>? OnAxis;
 
+    private readonly HashSet<AxisId> _unclampedAxes = [];
+
     public InputManEngine(InputProfile? profile = null)
     {
         _profile = profile ?? new InputProfile();
@@ -86,15 +88,19 @@ public sealed class InputManEngine : IInputMan
                 if (actionEvt.HasValue)
                     OnAction?.Invoke(actionEvt.Value);
 
+                //Unclamp any binding with DeltaAxis so mouse flicks doesn't feel sticky
+                if (binding.Trigger.Type == TriggerType.DeltaAxis && binding.Output is AxisOutput ax)
+                    _unclampedAxes.Add(ax.Axis);
+
                 // Handle Axis Events
                 if (axisEvt.HasValue)
                 {
                     var a = axisEvt.Value.Axis;
-                    _axes[a] = Clamp(_axes[a], -1f, 1f); //clamp first
+                    if (!_unclampedAxes.Contains(a))
+                        _axes[a] = Clamp(_axes[a], -1f, 1f);
 
                     OnAxis?.Invoke(axisEvt.Value with { Value = _axes[a] });
                 }
-
 
                 // 3. Centralized Consumption Logic
                 if (shouldConsume && didTrigger)
