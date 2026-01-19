@@ -9,7 +9,7 @@ public static class InputProfileJson
 {
     public static InputProfile Load(string json)
     {
-        if (json is null) throw new ArgumentNullException(nameof(json));
+        ArgumentNullException.ThrowIfNull(json);
 
         var profile = JsonSerializer.Deserialize<InputProfile>(json, InputProfileJsonOptions.Default)
             ?? throw new JsonException("Failed to deserialize InputProfile (result was null).");
@@ -20,7 +20,7 @@ public static class InputProfileJson
 
     public static InputProfile LoadFromFile(string path)
     {
-        if (path is null) throw new ArgumentNullException(nameof(path));
+        ArgumentNullException.ThrowIfNull(path);
         var json = File.ReadAllText(path);
         return Load(json);
     }
@@ -34,7 +34,7 @@ public static class InputProfileJson
 
     public static void SaveToFile(InputProfile profile, string path, bool indented = true)
     {
-        if (path is null) throw new ArgumentNullException(nameof(path));
+        ArgumentNullException.ThrowIfNull(path);
         File.WriteAllText(path, Save(profile, indented));
     }
 
