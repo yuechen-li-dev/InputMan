@@ -3,6 +3,7 @@ using InputMan.Core.Serialization;
 using InputMan.StrideConn;
 using Stride.Core.Mathematics;
 using Stride.Engine;
+using System;
 using System.IO;
 
 namespace ThirdPersonPlatformerInputManDemo;
@@ -12,27 +13,33 @@ public sealed class InstallInputMan : StartupScript
 
     public override void Start()
     {
-        if (Game.Services.GetService<IInputMan>() != null)
-            return;
+       // Func<InputProfile> buildDefault = DefaultPlatformerProfile.Create; // <- switch line
 
-        var userDir = DemoProfilePaths.GetUserProfileDirectory();
+        Func<InputProfile> buildDefault = DefaultPlatformerProfile.Create;
+
         var userProfilePath = DemoProfilePaths.GetUserProfilePath();
-        var defaultProfilePath = DemoProfilePaths.GetBundledDefaultProfilePath();
+        var defaultJsonPath = DemoProfilePaths.GetBundledDefaultProfilePath();
 
         InputProfile profile;
 
         if (File.Exists(userProfilePath))
         {
-            var json = File.ReadAllText(userProfilePath);
-            profile = InputProfileJson.Load(json);
+            profile = InputProfileJson.Load(File.ReadAllText(userProfilePath));
+        }
+        else if (File.Exists(defaultJsonPath))
+        {
+            profile = InputProfileJson.Load(File.ReadAllText(defaultJsonPath));
         }
         else
         {
-            var json = File.ReadAllText(defaultProfilePath);
-            profile = InputProfileJson.Load(json);
+            // Dev fallback: generate from code if bundled JSON doesn't exist yet
+            profile = buildDefault();
+        }
 
-            // Optional: seed user profile so rebinding can save immediately
-            Directory.CreateDirectory(userDir);
+        // Seed user profile if missing
+        if (!File.Exists(userProfilePath))
+        {
+            Directory.CreateDirectory(DemoProfilePaths.GetUserProfileDirectory());
             File.WriteAllText(userProfilePath, InputProfileJson.Save(profile));
         }
 
