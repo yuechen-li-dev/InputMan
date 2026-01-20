@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0-windows</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <RootNamespace>ThirdPersonPlatformerInputManDemo</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
@@ -15,7 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\InputMan.Core\InputMan.Core.csproj" />
-    <ProjectReference Include="..\..\..\src\Inputman.StrideConn\Inputman.StrideConn.csproj" />
-    <ProjectReference Include="..\ThirdPersonPlatformerInputManDemo.ProfilesFs\ThirdPersonPlatformerInputManDemo.ProfilesFs.fsproj" />
+    <ProjectReference Include="..\..\..\src\Inputman.StrideConn\InputMan.StrideConn.csproj" />
   </ItemGroup>
+
 </Project>
