@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InputMan.StrideConn", "..\.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InputMan.Core", "..\..\src\InputMan.Core\InputMan.Core.csproj", "{CD374DD9-5CF8-7B41-DA7B-5F2848AD85C6}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ThirdPersonPlatformerInputManDemo.ProfilesFs", "ThirdPersonPlatformerInputManDemo.ProfilesFs\ThirdPersonPlatformerInputManDemo.ProfilesFs.fsproj", "{C18ABFEC-CFAE-4126-9B41-DB9B0DB2DD9B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{CD374DD9-5CF8-7B41-DA7B-5F2848AD85C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CD374DD9-5CF8-7B41-DA7B-5F2848AD85C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CD374DD9-5CF8-7B41-DA7B-5F2848AD85C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C18ABFEC-CFAE-4126-9B41-DB9B0DB2DD9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C18ABFEC-CFAE-4126-9B41-DB9B0DB2DD9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C18ABFEC-CFAE-4126-9B41-DB9B0DB2DD9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C18ABFEC-CFAE-4126-9B41-DB9B0DB2DD9B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

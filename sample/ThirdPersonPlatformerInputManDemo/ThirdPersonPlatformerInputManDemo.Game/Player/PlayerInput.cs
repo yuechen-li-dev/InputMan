@@ -107,12 +107,12 @@ namespace ThirdPersonPlatformerInputManDemo.Player
                 // Mouse lock/unlock UX stays on Stride Input
                 // Cursor lock/unlock is still an engine/window side-effect,
                 // but the *decision* comes from InputMan actions.
-                if (_inputMan.IsDown(LookLockAction))
+                if (_inputMan.WasPressed(LookLockAction))
                 {
                     Input.LockMousePosition(true);
                     Game.IsMouseVisible = false;
                 }
-                if (_inputMan.WasPressed(LookUnlockAction)) //TODO: Get LookUnlockAction working too. 
+                if (_inputMan.WasPressed(LookUnlockAction))
                 {
                     Input.UnlockMousePosition();
                     Game.IsMouseVisible = true;

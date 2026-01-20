@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\InputMan.Core\InputMan.Core.csproj" />
     <ProjectReference Include="..\..\..\src\Inputman.StrideConn\InputMan.StrideConn.csproj" />
+    <ProjectReference Include="..\ThirdPersonPlatformerInputManDemo.ProfilesFs\ThirdPersonPlatformerInputManDemo.ProfilesFs.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -93,4 +93,30 @@ public static class Bind
             Output = new AxisOutput(axis, scale),
             Consume = consume,
         };
+
+    //Shortened overload for FSharp
+    // ---- Action ----
+    public static Binding Action(ControlKey key, ActionId action)
+        => Action(key, action, ButtonEdge.Pressed, ConsumeMode.None, null);
+
+    public static Binding Action(ControlKey key, ActionId action, ButtonEdge edge)
+        => Action(key, action, edge, ConsumeMode.None, null);
+
+    // ---- ButtonAxis ----
+    public static Binding ButtonAxis(ControlKey key, AxisId axis, float scale)
+        => ButtonAxis(key, axis, scale, ConsumeMode.None, null);
+
+    // ---- Axis ----
+    public static Binding Axis(ControlKey key, AxisId axis)
+        => Axis(key, axis, 1f, 0f, ConsumeMode.None, null);
+
+    public static Binding Axis(ControlKey key, AxisId axis, float scale)
+        => Axis(key, axis, scale, 0f, ConsumeMode.None, null);
+
+    // ---- DeltaAxis ----
+    public static Binding DeltaAxis(ControlKey key, AxisId axis)
+        => DeltaAxis(key, axis, 1f, ConsumeMode.None, null);
+
+    public static Binding DeltaAxis(ControlKey key, AxisId axis, float scale)
+        => DeltaAxis(key, axis, scale, ConsumeMode.None, null);
 }
