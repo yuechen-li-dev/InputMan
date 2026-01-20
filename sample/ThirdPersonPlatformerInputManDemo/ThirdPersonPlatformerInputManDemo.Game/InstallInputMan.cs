@@ -15,8 +15,26 @@ public sealed class InstallInputMan : StartupScript
         if (Game.Services.GetService<IInputMan>() != null)
             return;
 
-        var json = File.ReadAllText("Resources/Input/profile.json");
-        var profile = InputProfileJson.Load(json);
+        var userDir = DemoProfilePaths.GetUserProfileDirectory();
+        var userProfilePath = DemoProfilePaths.GetUserProfilePath();
+        var defaultProfilePath = DemoProfilePaths.GetBundledDefaultProfilePath();
+
+        InputProfile profile;
+
+        if (File.Exists(userProfilePath))
+        {
+            var json = File.ReadAllText(userProfilePath);
+            profile = InputProfileJson.Load(json);
+        }
+        else
+        {
+            var json = File.ReadAllText(defaultProfilePath);
+            profile = InputProfileJson.Load(json);
+
+            // Optional: seed user profile so rebinding can save immediately
+            Directory.CreateDirectory(userDir);
+            File.WriteAllText(userProfilePath, InputProfileJson.Save(profile));
+        }
 
         var sys = new StrideInputManSystem(Game.Services, profile)
         {
@@ -24,5 +42,6 @@ public sealed class InstallInputMan : StartupScript
         };
         Game.GameSystems.Add(sys);
     }
-
 }
+
+
