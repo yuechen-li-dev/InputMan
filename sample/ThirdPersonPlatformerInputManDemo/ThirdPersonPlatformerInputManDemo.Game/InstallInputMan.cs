@@ -4,7 +4,6 @@ using InputMan.StrideConn;
 using Stride.Engine;
 using System;
 using System.IO;
-using ThirdPersonPlatformerInputManDemoFs;
 
 namespace ThirdPersonPlatformerInputManDemo;
 
@@ -13,7 +12,7 @@ public sealed class InstallInputMan : StartupScript
 
     public override void Start()
     {
-        Func<InputProfile> buildDefault = DefaultPlatformerProfileFs.Create; // <- switch line
+        Func<InputProfile> buildDefault = DefaultPlatformerProfile.Create; // <- switch line
 
         var userProfilePath = DemoProfilePaths.GetUserProfilePath();
         var defaultJsonPath = DemoProfilePaths.GetBundledDefaultProfilePath();
