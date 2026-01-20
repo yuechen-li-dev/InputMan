@@ -1,20 +1,17 @@
 ﻿using Stride.Core.Mathematics;
 using Stride.Input;
 
-public sealed class StrideInputSource : IStrideInputSource
+public sealed class StrideInputSource(InputManager input) : IStrideInputSource
 {
-    private readonly InputManager _input;
-    public StrideInputSource(InputManager input) => _input = input;
+    public bool IsKeyDown(Keys key) => input.IsKeyDown(key);
+    public bool IsMouseButtonDown(MouseButton button) => input.IsMouseButtonDown(button);
 
-    public bool IsKeyDown(Keys key) => _input.IsKeyDown(key);
-    public bool IsMouseButtonDown(MouseButton button) => _input.IsMouseButtonDown(button);
-
-    public Vector2 MouseDelta => _input.MouseDelta;
-    public float MouseWheelDelta => _input.MouseWheelDelta;
+    public Vector2 MouseDelta => input.MouseDelta;
+    public float MouseWheelDelta => input.MouseWheelDelta;
 
     public bool TryGetGamePadState(int index, out GamePadState state)
     {
-        var pad = _input.GetGamePadByIndex(index);
+        var pad = input.GetGamePadByIndex(index);
         if (pad != null)
         {
             state = pad.State;
@@ -22,7 +19,7 @@ public sealed class StrideInputSource : IStrideInputSource
         }
 
         // fallback if needed
-        foreach (var gp in _input.GamePads)
+        foreach (var gp in input.GamePads)
         {
             if (gp.Index == index)
             {
