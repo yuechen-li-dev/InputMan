@@ -418,3 +418,4 @@ FodyWeavers.xsd
 *.msp
 /sample/ThirdPersonPlatformerInputManDemo
 /sample/ThirdPersonPlatformerInputManDemo/ThirdPersonPlatformerInputManDemo.Game/ThirdPersonPlatformerInputManDemo.Game.sdpkg
+/sample/ThirdPersonPlatformerInputManDemo/ThirdPersonPlatformerInputManDemo.ProfilesFs/ThirdPersonPlatformerInputManDemo.ProfilesFs.fsproj
