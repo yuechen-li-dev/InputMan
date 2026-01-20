@@ -6,52 +6,131 @@ open Stride.Input
 open type InputMan.Core.Bind
 open type InputMan.StrideConn.StrideKeys
 
-type DefaultPlatformerProfileFs =
-    static member Jump = ActionId "Jump"
-    static member LookLock = ActionId "LookLock"
-    static member LookUnlock = ActionId "LookUnlock"
-    static member MoveX = AxisId "MoveX"
-    static member MoveY = AxisId "MoveY"
-    static member LookStickX = AxisId "LookStickX"
-    static member LookStickY = AxisId "LookStickY"
-    static member LookMouseX = AxisId "LookMouseX"
-    static member LookMouseY = AxisId "LookMouseY"
-    static member Move = Axis2Id "Move"
-    static member LookStick = Axis2Id "LookStick"
-    static member LookMouse = Axis2Id "LookMouse"
+module DefaultPlatformerProfileFs =
 
-    static member Create() : InputProfile =
-        let S = DefaultPlatformerProfileFs // Short alias for internal references
+    // --- IDs ---
+    let jump       = ActionId "Jump"
+    let lookLock   = ActionId "LookLock"
+    let lookUnlock = ActionId "LookUnlock"
 
-        let bindings = [
-            // Keyboard/Mouse
-            yield ButtonAxis(K Keys.A, S.MoveX, -1.0f)
-            yield ButtonAxis(K Keys.D, S.MoveX,  1.0f) 
-            yield ButtonAxis(K Keys.S, S.MoveY, -1.0f) 
-            yield ButtonAxis(K Keys.W, S.MoveY,  1.0f) 
-            yield Action(K Keys.Space, S.Jump, ButtonEdge.Pressed) 
-            yield DeltaAxis(MouseDeltaX, S.LookMouseX, 1.0f) 
-            yield DeltaAxis(MouseDeltaY, S.LookMouseY, 1.0f) 
-            yield Action(M MouseButton.Left, S.LookLock, ButtonEdge.Down) 
-            yield Action(K Keys.Escape, S.LookUnlock, ButtonEdge.Pressed) 
+    let pause      = ActionId "Pause"
+    let confirm    = ActionId "UIConfirm"
+    let cancel     = ActionId "UICancel"
 
-            // Gamepad
-            for i in 0uy .. 3uy do 
-                yield Axis(PadLeftX i,  S.MoveX, 1.0f) 
-                yield Axis(PadLeftY i,  S.MoveY, 1.0f) 
-                yield Axis(PadRightX i, S.LookStickX, 1.0f) 
-                yield Axis(PadRightY i, S.LookStickY, 1.0f) 
-                yield Action(PadBtn(i, GamePadButton.A), S.Jump, ButtonEdge.Pressed) 
-        ]
+    let moveX      = AxisId "MoveX"
+    let moveY      = AxisId "MoveY"
 
-        let gameplay = ActionMapDefinition(Id = ActionMapId "Gameplay", Priority = 10, CanConsume = false) 
-        gameplay.Bindings <- ResizeArray bindings 
+    let lookStickX = AxisId "LookStickX"
+    let lookStickY = AxisId "LookStickY"
+
+    let lookMouseX = AxisId "LookMouseX"
+    let lookMouseY = AxisId "LookMouseY"
+
+    let move       = Axis2Id "Move"
+    let lookStick  = Axis2Id "LookStick"
+    let lookMouse  = Axis2Id "LookMouse"
+
+    // --- Helpers ---
+    let axis2 (key: string) (id: Axis2Id) (x: AxisId) (y: AxisId) =
+        key, Axis2Definition(Id = id, X = x, Y = y)
+
+    let map (key: string) (def: ActionMapDefinition) =
+        key, def
+
+    // --- Gameplay binding groups ---
+    let wasd : seq<Binding> =
+        seq {
+            yield ButtonAxis(K Keys.A, moveX, -1.0f)
+            yield ButtonAxis(K Keys.D, moveX,  1.0f)
+            yield ButtonAxis(K Keys.S, moveY, -1.0f)
+            yield ButtonAxis(K Keys.W, moveY,  1.0f)
+        }
+
+    let gameplayActions : seq<Binding> =
+        seq {
+            yield Action(K Keys.Space, jump, ButtonEdge.Pressed)
+            // Escape unlock belongs to gameplay because it changes camera lock state
+            yield Action(K Keys.Escape, lookUnlock, ButtonEdge.Pressed)
+        }
+
+    let mouseLook : seq<Binding> =
+        seq {
+            yield DeltaAxis(MouseDeltaX, lookMouseX, 1.0f)
+            yield DeltaAxis(MouseDeltaY, lookMouseY, 1.0f)
+        }
+
+    let mouseLock : seq<Binding> =
+        seq {
+            yield Action(M MouseButton.Left, lookLock, ButtonEdge.Down)
+        }
+
+    let gamepads : seq<Binding> =
+        seq {
+            for i in 0uy .. 3uy do
+                yield Axis(PadLeftX i,  moveX, 1.0f)
+                yield Axis(PadLeftY i,  moveY, 1.0f)
+                yield Axis(PadRightX i, lookStickX, 1.0f)
+                yield Axis(PadRightY i, lookStickY, 1.0f)
+                yield Action(PadBtn(i, GamePadButton.A), jump, ButtonEdge.Pressed)
+        }
+
+    // --- UI binding groups ---
+    // UI should consume to prevent gameplay leakage while menus are open.
+    let uiNav : seq<Binding> =
+        seq {
+            // Pause toggle
+            yield Action(K Keys.Escape, pause, ButtonEdge.Pressed, consume = ConsumeMode.All)
+            yield Action(PadBtn(0uy, GamePadButton.Start), pause, ButtonEdge.Pressed, consume = ConsumeMode.All)
+        }
+
+    let uiConfirmCancel : seq<Binding> =
+        seq {
+            yield Action(K Keys.Enter, confirm, ButtonEdge.Pressed, consume = ConsumeMode.All)
+            yield Action(PadBtn(0uy, GamePadButton.A), confirm, ButtonEdge.Pressed, consume = ConsumeMode.All)
+
+            yield Action(K Keys.Back, cancel, ButtonEdge.Pressed, consume = ConsumeMode.All)
+            yield Action(PadBtn(0uy, GamePadButton.B), cancel, ButtonEdge.Pressed, consume = ConsumeMode.All)
+        }
+
+    let Create () : InputProfile =
+
+        let gameplayBindings =
+            Seq.concat [ wasd; gameplayActions; mouseLook; mouseLock; gamepads ]
+            |> ResizeArray
+
+        let uiBindings =
+            Seq.concat [ uiNav; uiConfirmCancel ]
+            |> ResizeArray
+
+        let gameplay =
+            ActionMapDefinition(
+                Id = ActionMapId "Gameplay",
+                Priority = 10,
+                CanConsume = false,
+                Bindings = gameplayBindings
+            )
+
+        let ui =
+            ActionMapDefinition(
+                Id = ActionMapId "UI",
+                Priority = 100,
+                CanConsume = true,
+                Bindings = uiBindings
+            )
 
         InputProfile(
-            Maps = Dictionary(dict ["Gameplay", gameplay]), 
-            Axis2 = Dictionary(dict [
-                "Move",      Axis2Definition(Id = S.Move,      X = S.MoveX,      Y = S.MoveY) 
-                "LookStick", Axis2Definition(Id = S.LookStick, X = S.LookStickX, Y = S.LookStickY) 
-                "LookMouse", Axis2Definition(Id = S.LookMouse, X = S.LookMouseX, Y = S.LookMouseY) 
-            ])
+            Maps =
+                [ map "Gameplay" gameplay
+                  map "UI" ui ]
+                |> dict
+                |> Dictionary,
+
+            Axis2 =
+                [
+                    axis2 "Move"      move      moveX      moveY
+                    axis2 "LookStick" lookStick lookStickX lookStickY
+                    axis2 "LookMouse" lookMouse lookMouseX lookMouseY
+                ]
+                |> dict
+                |> Dictionary
         )
