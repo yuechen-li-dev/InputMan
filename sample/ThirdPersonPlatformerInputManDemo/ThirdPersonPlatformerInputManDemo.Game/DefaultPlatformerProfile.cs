@@ -27,6 +27,8 @@ namespace ThirdPersonPlatformerInputManDemo
         public static readonly Axis2Id LookStick = new("LookStick");
         public static readonly Axis2Id LookMouse = new("LookMouse");
 
+
+
         public static InputProfile Create()
         {
             var gameplay = new ActionMapDefinition
@@ -50,7 +52,7 @@ namespace ThirdPersonPlatformerInputManDemo
                     DeltaAxis(MouseDeltaY, LookMouseY, +1),
 
                     // --- Mouse Lock ---
-                    Action(M(MouseButton.Left), LookLock, ButtonEdge.Down),
+                    Action(M(MouseButton.Left), LookLock, ButtonEdge.Pressed),
                     Action(K(Keys.Escape), LookUnlock, ButtonEdge.Pressed),
 
                 ]
