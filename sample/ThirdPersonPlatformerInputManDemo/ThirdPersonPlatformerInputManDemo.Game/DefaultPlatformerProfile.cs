@@ -83,6 +83,7 @@ namespace ThirdPersonPlatformerInputManDemo
                 [
                     // Pause toggle (works even when UI is active)
                     Action(K(Keys.Escape), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All),
+                    Action(K(Keys.M), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All),
                     Action(PadBtn(0, GamePadButton.Start), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All),
 
                     // Optional confirm/cancel for menus
@@ -92,6 +93,13 @@ namespace ThirdPersonPlatformerInputManDemo
                     Action(PadBtn(0, GamePadButton.B), Cancel, ButtonEdge.Pressed, consume: ConsumeMode.All),
                 ]
             };
+
+            for (byte i = 0; i < 4; i++)
+            {
+                ui.Bindings.Add(Action(PadBtn(i, GamePadButton.Start), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All));
+                ui.Bindings.Add(Action(PadBtn(i, GamePadButton.A), Confirm, ButtonEdge.Pressed, consume: ConsumeMode.All));
+                ui.Bindings.Add(Action(PadBtn(i, GamePadButton.B), Cancel, ButtonEdge.Pressed, consume: ConsumeMode.All));
+            }
 
             return new InputProfile
             {

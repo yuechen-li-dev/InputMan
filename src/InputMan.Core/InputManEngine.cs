@@ -56,7 +56,7 @@ public sealed class InputManEngine : IInputMan
         DeltaTimeSeconds = deltaTimeSeconds;
         _timeSeconds = timeSeconds;
 
-        // Let rebinding observe raw snapshot each frame
+        // 0. Rebind update. Let rebinding observe raw snapshot each frame
         _rebind?.Update(snapshot, _timeSeconds);
 
         if (_activeMapsDirty)
