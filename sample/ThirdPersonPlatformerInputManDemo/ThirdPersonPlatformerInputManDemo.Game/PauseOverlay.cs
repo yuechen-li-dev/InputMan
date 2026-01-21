@@ -7,7 +7,9 @@ using Stride.Engine;
 using Stride.Input;
 using Stride.Profiling;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace ThirdPersonPlatformerInputManDemo;
 
@@ -26,6 +28,26 @@ public sealed class PauseOverlay : SyncScript
     // Rebind state
     private IRebindSession? _rebind;
     private string _rebindStatus = "";
+
+    static IReadOnlyList<ControlKey> BuildAllKeyboardButtons()
+    {
+        // All Stride Keys values (exclude None)
+        return [.. Enum.GetValues<Keys>()
+            .Where(k => k != Keys.None)
+            .Select(k => new ControlKey(DeviceKind.Keyboard, DeviceIndex: 0, Code: (int)k))];
+    }
+
+    static IReadOnlyList<ControlKey> BuildMouseButtons()
+    {
+        return
+        [
+        new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Left),
+        new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Right),
+        new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Middle),
+        new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Extended1),
+        new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Extended2),
+        ];
+    }
 
     public override void Start()
     {
@@ -95,10 +117,14 @@ public sealed class PauseOverlay : SyncScript
 
         _rebindStatus = "Press a key / button to bind… (Esc cancels)";
 
+        var candidates = BuildAllKeyboardButtons()
+            .Concat(BuildMouseButtons()).ToList();
+
         var request = new RebindRequest
         {
             Map = GameplayMap,
             BindingNameOrSlot = bindingNameOrSlot,
+            CandidateButtons = candidates,
             ExcludeMouseMotion = true,
             Timeout = TimeSpan.FromSeconds(10),
         };
