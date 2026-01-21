@@ -10,8 +10,12 @@ public sealed class RebindRequest
 
     /// <summary>Exclude mouse motion / deltas by default to avoid accidental bindings.</summary>
     public bool ExcludeMouseMotion { get; init; } = true;
-
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
+
+    // NEW: if provided, rebinding scans these instead of only known controls
+    public IReadOnlyList<ControlKey>? CandidateButtons { get; init; }
+    public IReadOnlyList<ControlKey>? CandidateAxes { get; init; }
+
 }
 
 public readonly record struct RebindProgress(string Message, float SecondsRemaining);
@@ -27,6 +31,7 @@ public interface IRebindSession
 {
     event Action<RebindProgress>? OnProgress;
     event Action<RebindResult>? OnCompleted;
+
     void Cancel();
 }
 
@@ -54,6 +59,12 @@ internal sealed class RebindSession : IRebindSession
 
     public event Action<RebindProgress>? OnProgress;
     public event Action<RebindResult>? OnCompleted;
+
+    private IReadOnlyList<ControlKey> ButtonsToWatch =>
+    _request.CandidateButtons ?? _knownButtons;
+
+    private IReadOnlyList<ControlKey> AxesToWatch =>
+        _request.CandidateAxes ?? _knownAxes;
 
     public RebindSession(
         InputManEngine engine,
@@ -123,14 +134,14 @@ internal sealed class RebindSession : IRebindSession
     private void Seed(InputSnapshot snapshot)
     {
         _downButtons.Clear();
-        foreach (var key in _knownButtons)
+        foreach (var key in ButtonsToWatch)
         {
             if (snapshot.TryGetButton(key, out var down) && down)
                 _downButtons.Add(key);
         }
 
         _prevAxis.Clear();
-        foreach (var key in _knownAxes)
+        foreach (var key in AxesToWatch)
         {
             if (_request.ExcludeMouseMotion && key.Device == DeviceKind.Mouse)
                 continue;
@@ -142,7 +153,7 @@ internal sealed class RebindSession : IRebindSession
 
     private bool TryCaptureButton(InputSnapshot snapshot, out ControlKey captured)
     {
-        foreach (var key in _knownButtons)
+        foreach (var key in ButtonsToWatch)
         {
             if (snapshot.TryGetButton(key, out var down) && down && !_downButtons.Contains(key))
             {
@@ -152,7 +163,7 @@ internal sealed class RebindSession : IRebindSession
         }
 
         // Update held-set
-        foreach (var key in _knownButtons)
+        foreach (var key in ButtonsToWatch)
         {
             if (snapshot.TryGetButton(key, out var down) && down)
                 _downButtons.Add(key);
@@ -169,7 +180,7 @@ internal sealed class RebindSession : IRebindSession
         // Capture threshold: tiny for DeltaAxis (mouse deltas), larger for Axis
         var captureThreshold = triggerType == TriggerType.DeltaAxis ? 0.001f : 0.25f;
 
-        foreach (var key in _knownAxes)
+        foreach (var key in AxesToWatch)
         {
             if (_request.ExcludeMouseMotion && key.Device == DeviceKind.Mouse)
                 continue;
