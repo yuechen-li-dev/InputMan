@@ -33,7 +33,7 @@ public sealed class PauseOverlay : SyncScript
             ?? throw new InvalidOperationException("IInputMan not registered. Did InstallInputMan run?");
 
         // Start in gameplay mode
-        _inputMan.SetMaps(GameplayMap);
+        _inputMan.SetMaps(UIMap, GameplayMap);
     }
 
     public override void Update()
@@ -48,7 +48,7 @@ public sealed class PauseOverlay : SyncScript
 
             // Demo hotkey: press J to start rebinding Jump
             if (_rebind == null && Input.IsKeyPressed(Keys.J))
-                BeginRebind("Jump.Primary"); // change string to match your binding Name
+                BeginRebind("Jump.Kb"); // change string to match your binding Name
         }
 
         // Rebind cancel (while paused)
@@ -79,7 +79,7 @@ public sealed class PauseOverlay : SyncScript
         else
         {
             // Resume gameplay
-            _inputMan.SetMaps(GameplayMap);
+            _inputMan.SetMaps(UIMap, GameplayMap);
 
             // Stop any active rebind session on resume
             _rebind?.Cancel();

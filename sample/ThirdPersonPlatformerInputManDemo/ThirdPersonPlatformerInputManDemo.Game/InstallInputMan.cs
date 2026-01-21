@@ -22,16 +22,16 @@ public sealed class InstallInputMan : StartupScript
 
 #if DEBUG
         // DEV: code first, then JSON overrides if present
-        
-        var profile = buildDefault(); //C#
-
-        // var profile = DefaultPlatformerProfileFs.profile; // F#
+        InputProfile profile;
 
         if (File.Exists(defaultJsonPath))
             profile = LoadJson(defaultJsonPath);
-
-        if (File.Exists(userProfilePath))
+        else if (File.Exists(userProfilePath))
             profile = LoadJson(userProfilePath);
+   
+        profile = buildDefault(); //C#
+
+        //profile = DefaultPlatformerProfileFs.profile; // F#
 #else
     // END USER: JSON first, then code fallback
     InputProfile profile;

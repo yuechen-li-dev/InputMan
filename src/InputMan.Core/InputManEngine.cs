@@ -187,19 +187,31 @@ public sealed class InputManEngine : IInputMan
         if (!_profile.Maps.TryGetValue(request.Map.Name, out var mapDef))
             throw new InvalidOperationException($"Map '{request.Map.Name}' not found in profile.");
 
-        // Resolve binding by name, or slot index
+        // 1. Resolve binding by name (Switch to OrdinalIgnoreCase for user input)
         int bindingIndex = mapDef.Bindings.FindIndex(b =>
-            string.Equals(b.Name, request.BindingNameOrSlot, StringComparison.Ordinal));
+            string.Equals(b.Name, request.BindingNameOrSlot, StringComparison.OrdinalIgnoreCase));
 
-        if (bindingIndex < 0 && int.TryParse(request.BindingNameOrSlot, out var slot))
+        // 2. If name not found, try to parse as a slot index
+        if (bindingIndex < 0)
         {
-            if ((uint)slot < (uint)mapDef.Bindings.Count)
-                bindingIndex = slot;
+            if (int.TryParse(request.BindingNameOrSlot, out var slot))
+            {
+                if ((uint)slot < (uint)mapDef.Bindings.Count)
+                    bindingIndex = slot;
+                else
+                    throw new InvalidOperationException($"Slot index '{slot}' is out of range. Map '{request.Map.Name}' only has {mapDef.Bindings.Count} bindings.");
+
+            }
         }
 
+        // 3. Final catch-all with diagnostic info
         if (bindingIndex < 0)
+        {
+            // List available names to make debugging easier in the console/log
+            var available = string.Join(", ", mapDef.Bindings.Select(b => $"'{b.Name}'"));
             throw new InvalidOperationException(
-                $"Binding '{request.BindingNameOrSlot}' not found in map '{request.Map.Name}'.");
+                $"Binding '{request.BindingNameOrSlot}' not found in map '{request.Map.Name}'. Available bindings: [{available}]");
+        }
 
         var binding = mapDef.Bindings[bindingIndex];
 

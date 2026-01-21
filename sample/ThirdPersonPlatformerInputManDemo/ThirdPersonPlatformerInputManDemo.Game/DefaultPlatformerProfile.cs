@@ -42,21 +42,21 @@ namespace ThirdPersonPlatformerInputManDemo
                 Bindings =
                 [
                     // --- Move: WASD (buttons -> axes) ---
-                    ButtonAxis(K(Keys.A), MoveX, -1),
-                    ButtonAxis(K(Keys.D), MoveX, +1),
-                    ButtonAxis(K(Keys.S), MoveY, -1),
-                    ButtonAxis(K(Keys.W), MoveY, +1),
+                    ButtonAxis(K(Keys.A), MoveX, -1, name: "MoveLeft.Kb"),
+                    ButtonAxis(K(Keys.D), MoveX, +1, name: "MoveRight.Kb"),
+                    ButtonAxis(K(Keys.S), MoveY, -1, name: "MoveBack.Kb"),
+                    ButtonAxis(K(Keys.W), MoveY, +1, name: "MoveFwd.Kb"),
 
                     // --- Jump ---
-                    Action(K(Keys.Space), Jump, ButtonEdge.Pressed),
+                    Action(K(Keys.Space), Jump, ButtonEdge.Pressed, name: "Jump.Kb"),
 
                     // --- Mouse look (delta axes) ---
-                    DeltaAxis(MouseDeltaX, LookMouseX, +1),
-                    DeltaAxis(MouseDeltaY, LookMouseY, +1),
+                    DeltaAxis(MouseDeltaX, LookMouseX, +1, name: "LookLeftRight.Kb"),
+                    DeltaAxis(MouseDeltaY, LookMouseY, +1, name: "LookUpDown.Kb"),
 
                     // --- Mouse Lock ---
-                    Action(M(MouseButton.Left), LookLock, ButtonEdge.Pressed),
-                    Action(K(Keys.Escape), LookUnlock, ButtonEdge.Pressed),
+                    Action(M(MouseButton.Left), LookLock, ButtonEdge.Pressed, name: "Looklock.Mouse"),
+                    Action(K(Keys.Escape), LookUnlock, ButtonEdge.Pressed, name: "LookUnlock.Mouse"),
 
                 ]
             };
