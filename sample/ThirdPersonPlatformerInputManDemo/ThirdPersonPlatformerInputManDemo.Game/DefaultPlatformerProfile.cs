@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
-using InputMan.Core;
+﻿using InputMan.Core;
+using InputMan.StrideConn;
 using Stride.Input;
+using System.Collections.Generic;
 using static InputMan.Core.Bind;
 using static InputMan.StrideConn.StrideKeys;
 
@@ -27,7 +28,9 @@ namespace ThirdPersonPlatformerInputManDemo
         public static readonly Axis2Id LookStick = new("LookStick");
         public static readonly Axis2Id LookMouse = new("LookMouse");
 
-
+        public static readonly ActionId Pause = new("Pause");
+        public static readonly ActionId Confirm = new("Confirm"); // optional
+        public static readonly ActionId Cancel = new("Cancel");   // optional
 
         public static InputProfile Create()
         {
@@ -71,11 +74,31 @@ namespace ThirdPersonPlatformerInputManDemo
                 gameplay.Bindings.Add(Action(PadBtn(i, GamePadButton.A), Jump, ButtonEdge.Pressed));
             }
 
+            var ui = new ActionMapDefinition
+            {
+                Id = new ActionMapId("UI"),
+                Priority = 100,
+                CanConsume = true,
+                Bindings =
+                [
+                    // Pause toggle (works even when UI is active)
+                    Action(K(Keys.Escape), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All),
+                    Action(PadBtn(0, GamePadButton.Start), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All),
+
+                    // Optional confirm/cancel for menus
+                    Action(K(Keys.Enter), Confirm, ButtonEdge.Pressed, consume: ConsumeMode.All),
+                    Action(K(Keys.Back), Cancel, ButtonEdge.Pressed, consume: ConsumeMode.All),
+                    Action(PadBtn(0, GamePadButton.A), Confirm, ButtonEdge.Pressed, consume: ConsumeMode.All),
+                    Action(PadBtn(0, GamePadButton.B), Cancel, ButtonEdge.Pressed, consume: ConsumeMode.All),
+                ]
+            };
+
             return new InputProfile
             {
                 Maps = new Dictionary<string, ActionMapDefinition>
                 {
-                    ["Gameplay"] = gameplay
+                    ["Gameplay"] = gameplay,
+                    ["UI"] = ui,
                 },
                 Axis2 = new Dictionary<string, Axis2Definition>
                 {
