@@ -23,6 +23,8 @@ public sealed class StrideInputManSystem : GameSystem
     private readonly HashSet<ControlKey> _watchedButtons = [];
     private readonly HashSet<ControlKey> _watchedAxes = [];
 
+    private int _lastProfileRevision;
+
     public StrideInputManSystem(IServiceRegistry services, InputProfile profile)
     : base(services)
     {
@@ -39,9 +41,11 @@ public sealed class StrideInputManSystem : GameSystem
         // Tick early so scripts can read stable state
         UpdateOrder = -1;
 
-        RebuildWatchedControls(profile);
+        // Use a counter to keep track of revision for rebuild. Could be made cleaner in future. 
+        _lastProfileRevision = _engine.ProfileRevision;
+        RebuildWatchedControls(_engine.ExportProfile());
 
-        //GO!
+        // GO!
         Enabled = true;
     }
 
@@ -66,6 +70,12 @@ public sealed class StrideInputManSystem : GameSystem
         var snapshot = StrideInputSnapshotBuilder.Build(_input, buttons, axes);
 
         _engine.Tick(snapshot, dt, t);
+
+        if (_engine.ProfileRevision != _lastProfileRevision)
+        {
+            _lastProfileRevision = _engine.ProfileRevision;
+            RebuildWatchedControls(_engine.ExportProfile());
+        }
     }
 
     private void RebuildWatchedControls(InputProfile profile)

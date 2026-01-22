@@ -42,7 +42,8 @@ public sealed class InputManEngine : IInputMan
 
     public IReadOnlyCollection<ControlKey>? RebindCandidateAxes
         => _rebind?.Request.CandidateAxes;
-    
+    public int ProfileRevision { get; set; }
+
     //Updates
     public long FrameIndex { get; private set; }
     public float DeltaTimeSeconds { get; private set; }
@@ -254,6 +255,7 @@ public sealed class InputManEngine : IInputMan
     public void ImportProfile(InputProfile profile)
     {
         _profile = profile ?? new InputProfile();
+        ProfileRevision++; //keeps track of revision for rebind.
 
         _actions.Clear();
         _axes.Clear();

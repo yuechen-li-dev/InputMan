@@ -232,6 +232,9 @@ internal sealed class RebindSession : IRebindSession
 
         _mapDef.Bindings[_bindingIndex] = newBinding;
 
+        // Tick up profile revision number to track map update.
+        _engine.ProfileRevision++;
+
         // Rebuild known controls so edge tracking includes the newly bound control
         _engine.RebuildKnownControlsFromRebind();
 
