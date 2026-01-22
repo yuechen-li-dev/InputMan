@@ -184,7 +184,7 @@ public sealed class InputManEngine : IInputMan
 
     public IRebindSession StartRebind(RebindRequest request)
     {
-        if (request is null) throw new ArgumentNullException(nameof(request));
+        ArgumentNullException.ThrowIfNull(request);
         if (request.Map.Name.Length == 0) throw new ArgumentException("Map must be set.", nameof(request));
         if (string.IsNullOrWhiteSpace(request.BindingNameOrSlot))
             throw new ArgumentException("BindingNameOrSlot must be set.", nameof(request));

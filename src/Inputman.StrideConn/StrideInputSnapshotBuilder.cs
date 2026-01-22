@@ -134,8 +134,6 @@ public static class StrideInputSnapshotBuilder
         return true;
     }
 
-    private static bool TryGetGamePadState(IStrideInputSource input, int index, out GamePadState state)
-    => input.TryGetGamePadState(index, out state);
 }
 
 

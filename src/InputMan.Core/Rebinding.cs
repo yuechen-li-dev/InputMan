@@ -37,27 +37,35 @@ public interface IRebindSession
     void Cancel();
 }
 
-internal sealed class RebindSession : IRebindSession
+internal sealed class RebindSession(
+    InputManEngine engine,
+    RebindRequest request,
+    ActionMapDefinition mapDef,
+    int bindingIndex,
+    Binding binding,
+    ControlKey[] knownButtons,
+    ControlKey[] knownAxes,
+float startTimeSeconds) : IRebindSession
 {
-    private readonly InputManEngine _engine;
-    private readonly RebindRequest _request;
-    private readonly ActionMapDefinition _mapDef;
-    private readonly int _bindingIndex;
-    private readonly Binding _originalBinding;
+    private readonly InputManEngine _engine = engine;
+    private readonly RebindRequest _request = request;
+    private readonly ActionMapDefinition _mapDef = mapDef;
+    private readonly int _bindingIndex = bindingIndex;
+    private readonly Binding _originalBinding = binding;
 
-    private readonly ControlKey[] _knownButtons;
-    private readonly ControlKey[] _knownAxes;
+    private readonly ControlKey[] _knownButtons = knownButtons;
+    private readonly ControlKey[] _knownAxes = knownAxes;
 
-    private readonly float _startTimeSeconds;
+    private readonly float _startTimeSeconds = startTimeSeconds;
 
     private bool _seeded;
     private bool _completed;
 
     // Track “already down” buttons so we only capture NEW presses
-    private readonly HashSet<ControlKey> _downButtons = new();
+    private readonly HashSet<ControlKey> _downButtons = [];
 
     // Track prior axis magnitudes so we can detect “crossing a small threshold”
-    private readonly Dictionary<ControlKey, float> _prevAxis = new();
+    private readonly Dictionary<ControlKey, float> _prevAxis = [];
 
     public event Action<RebindProgress>? OnProgress;
     public event Action<RebindResult>? OnCompleted;
@@ -69,28 +77,6 @@ internal sealed class RebindSession : IRebindSession
 
     private IReadOnlyList<ControlKey> AxesToWatch =>
             _request.CandidateAxes ?? _knownAxes;
-
-
-    public RebindSession(
-        InputManEngine engine,
-        RebindRequest request,
-        ActionMapDefinition mapDef,
-        int bindingIndex,
-        Binding binding,
-        ControlKey[] knownButtons,
-        ControlKey[] knownAxes,
-    float startTimeSeconds)
-    {
-        _engine = engine;
-        _request = request;
-        _mapDef = mapDef;
-        _bindingIndex = bindingIndex;
-        _originalBinding = binding;
-
-        _knownButtons = knownButtons;
-        _knownAxes = knownAxes;
-        _startTimeSeconds = startTimeSeconds;
-    }
 
     public void Cancel()
     {
