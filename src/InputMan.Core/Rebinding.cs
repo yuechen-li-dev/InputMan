@@ -13,8 +13,8 @@ public sealed class RebindRequest
     public bool ExcludeMouseMotion { get; init; } = true;
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
 
-    public IReadOnlyList<ControlKey>? CandidateButtons { get; init; }
-    public IReadOnlyList<ControlKey>? CandidateAxes { get; init; }
+    public IReadOnlyList<ControlKey>? CandidateButtons { get; set; }
+    public IReadOnlyList<ControlKey>? CandidateAxes { get; set; }
 
     // --- Guardrails ---
     /// <summary>If provided, only these device kinds can be captured.</summary>

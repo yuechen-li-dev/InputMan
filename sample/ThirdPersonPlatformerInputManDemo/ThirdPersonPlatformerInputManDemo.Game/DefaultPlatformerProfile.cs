@@ -55,8 +55,8 @@ namespace ThirdPersonPlatformerInputManDemo
                     DeltaAxis(MouseDeltaY, LookMouseY, +1, name: "LookUpDown.Kb"),
 
                     // --- Mouse Lock ---
-                    Action(M(MouseButton.Left), LookLock, ButtonEdge.Pressed, name: "Looklock.Mouse"),
-                    Action(K(Keys.Escape), LookUnlock, ButtonEdge.Pressed, name: "LookUnlock.Mouse"),
+                    Action(M(MouseButton.Left), LookLock, ButtonEdge.Pressed, name: "LookLock.Mouse"),
+                    Action(K(Keys.Escape), LookUnlock, ButtonEdge.Pressed, name: "LookUnlock.Kb"),
 
                 ]
             };
@@ -82,8 +82,8 @@ namespace ThirdPersonPlatformerInputManDemo
                 Bindings =
                 [
                     // Pause toggle (works even when UI is active)
-                    Action(K(Keys.Escape), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All),
-                    Action(K(Keys.M), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All),
+                    Action(K(Keys.Escape), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All, name: "Pause.Kb.1"),
+                    Action(K(Keys.M), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All, name: "Pause.Kb.2"),
                     Action(PadBtn(0, GamePadButton.Start), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All),
 
                     // Optional confirm/cancel for menus

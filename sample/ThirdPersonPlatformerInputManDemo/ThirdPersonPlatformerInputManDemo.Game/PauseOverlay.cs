@@ -15,6 +15,13 @@ namespace ThirdPersonPlatformerInputManDemo;
 
 public sealed class PauseOverlay : SyncScript
 {
+    private const string JumpKb = "Jump.Kb";
+    private const string LookLockMouse = "LookLock.Mouse";
+    private const string LookUnlockKb = "LookUnlock.Kb"; 
+    private const string PauseKb1 = "Pause.Kb.1";
+    private const string PauseKb2 = "Pause.Kb.2";
+    private const string PausePad0 = "Pause.Pad0";
+
     private IInputMan _inputMan = null!;
     private bool _paused;
 
@@ -66,7 +73,7 @@ public sealed class PauseOverlay : SyncScript
 
             // Demo hotkey: press J to start rebinding Jump
             if (_rebind == null && Input.IsKeyPressed(Keys.J))
-                BeginRebind("Jump.Kb"); // change string to match your binding Name
+                BeginRebind(JumpKb);
         }
 
         // Rebind cancel (while paused)
@@ -113,17 +120,16 @@ public sealed class PauseOverlay : SyncScript
 
         _rebindStatus = "Press a key / button to bind… (Esc cancels)";
 
-        var candidates = BuildAllKeyboardButtons()
-            .Concat(BuildMouseButtons()).ToList();
+        var request = MakePresetFor(bindingNameOrSlot);
 
-        var request = new RebindRequest
-        {
-            Map = GameplayMap,
-            BindingNameOrSlot = bindingNameOrSlot,
-            CandidateButtons = candidates,
-            ExcludeMouseMotion = true,
-            Timeout = TimeSpan.FromSeconds(10),
-        };
+        // Candidates: always allow any keyboard key (so you can bind to NEW keys)
+        var buttons = BuildAllKeyboardButtons().ToList();
+
+        // Only add mouse buttons if preset allows mouse (LookLock.Mouse etc.)
+        if (request.AllowedDevices is null || request.AllowedDevices.Contains(DeviceKind.Mouse))
+            buttons.AddRange(BuildMouseButtons());
+
+        request.CandidateButtons = buttons;
 
         var session = _inputMan.StartRebind(request);
         _rebind = session;
@@ -169,4 +175,32 @@ public sealed class PauseOverlay : SyncScript
         File.WriteAllText(userPath, InputProfileJson.Save(profile));
         System.Diagnostics.Debug.WriteLine($"Saved InputMan profile: {userPath}");
     }
+
+    private static RebindRequest MakePresetFor(string bindingNameOrSlot)
+    {
+        // Look lock is explicitly mouse-friendly
+        if (string.Equals(bindingNameOrSlot, LookLockMouse, StringComparison.OrdinalIgnoreCase))
+        {
+            var req = RebindPresets.MouseAllowedButton(GameplayMap, bindingNameOrSlot);
+
+            // Keep Escape reserved for cancel/unpause safety
+            req.ForbiddenControls = new HashSet<ControlKey>
+        {
+            new(DeviceKind.Keyboard, 0, (int)Keys.Escape),
+        };
+
+            return req;
+        }
+
+        // Everything else: gameplay button rebind (keyboard + gamepad, no mouse)
+        var def = RebindPresets.GameplayButton(GameplayMap, bindingNameOrSlot);
+
+        def.ForbiddenControls = new HashSet<ControlKey>
+    {
+        new(DeviceKind.Keyboard, 0, (int)Keys.Escape),
+    };
+
+        return def;
+    }
+
 }

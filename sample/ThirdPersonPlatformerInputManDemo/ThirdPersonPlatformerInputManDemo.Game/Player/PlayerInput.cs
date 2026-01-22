@@ -139,27 +139,7 @@ namespace ThirdPersonPlatformerInputManDemo.Player
             {
                 var didJump = _inputMan.WasPressed(JumpAction);
                 JumpEventKey.Broadcast(didJump);
-            }
-
-            // 4) Pause
-            {                
-                if (_inputMan.WasPressed(PauseAction))
-                {
-                    _paused = !_paused;
-
-                    if (_paused)
-                    {
-                        _inputMan.SetMaps(UIMap); // only UI active
-                        Input.UnlockMousePosition();
-                        Game.IsMouseVisible = true;
-                    }
-                    else
-                    {
-                        _inputMan.SetMaps(GameplayMap); // back to gameplay
-                                                        // (optional) re-lock if you want
-                    }
-                }
-            }
+            }            
         }
     }
 }
