@@ -13,10 +13,18 @@ public sealed class RebindRequest
     public bool ExcludeMouseMotion { get; init; } = true;
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(10);
 
-    // NEW: if provided, rebinding scans these instead of only known controls
     public IReadOnlyList<ControlKey>? CandidateButtons { get; init; }
     public IReadOnlyList<ControlKey>? CandidateAxes { get; init; }
 
+    // --- Guardrails ---
+    /// <summary>If provided, only these device kinds can be captured.</summary>
+    public IReadOnlySet<DeviceKind>? AllowedDevices { get; init; }
+
+    /// <summary>If provided, these specific controls can never be captured.</summary>
+    public IReadOnlySet<ControlKey>? ForbiddenControls { get; init; }
+
+    /// <summary>Reject binding to a control already used by another binding in the same map.</summary>
+    public bool DisallowConflictsInSameMap { get; init; } = true;
 }
 
 public readonly record struct RebindProgress(string Message, float SecondsRemaining);
@@ -78,6 +86,23 @@ float startTimeSeconds) : IRebindSession
     private IReadOnlyList<ControlKey> AxesToWatch =>
             _request.CandidateAxes ?? _knownAxes;
 
+    private bool IsAllowedCandidate(ControlKey key, TriggerType triggerType)
+    {
+        // Device filter
+        if (_request.AllowedDevices is not null && !_request.AllowedDevices.Contains(key.Device))
+            return false;
+
+        // Forbidden list
+        if (_request.ForbiddenControls is not null && _request.ForbiddenControls.Contains(key))
+            return false;
+
+        // Existing behavior: exclude mouse motion if requested (applies to axis/delta-axis capture)
+        if (_request.ExcludeMouseMotion && triggerType == TriggerType.DeltaAxis && key.Device == DeviceKind.Mouse)
+            return false;
+
+        return true;
+    }
+
     public void Cancel()
     {
         if (_completed) return;
@@ -127,6 +152,9 @@ float startTimeSeconds) : IRebindSession
         _downButtons.Clear();
         foreach (var key in ButtonsToWatch)
         {
+            if (!IsAllowedCandidate(key, TriggerType.Button))
+                continue;
+
             if (snapshot.TryGetButton(key, out var down) && down)
                 _downButtons.Add(key);
         }
@@ -134,7 +162,7 @@ float startTimeSeconds) : IRebindSession
         _prevAxis.Clear();
         foreach (var key in AxesToWatch)
         {
-            if (_request.ExcludeMouseMotion && key.Device == DeviceKind.Mouse)
+            if (!IsAllowedCandidate(key, _originalBinding.Trigger.Type))
                 continue;
 
             var v = snapshot.TryGetAxis(key, out var cur) ? cur : 0f;
@@ -146,6 +174,9 @@ float startTimeSeconds) : IRebindSession
     {
         foreach (var key in ButtonsToWatch)
         {
+            if (!IsAllowedCandidate(key, TriggerType.Button))
+                continue;
+
             if (snapshot.TryGetButton(key, out var down) && down && !_downButtons.Contains(key))
             {
                 captured = key;
@@ -173,7 +204,7 @@ float startTimeSeconds) : IRebindSession
 
         foreach (var key in AxesToWatch)
         {
-            if (_request.ExcludeMouseMotion && key.Device == DeviceKind.Mouse)
+            if (!IsAllowedCandidate(key, triggerType))
                 continue;
 
             var cur = snapshot.TryGetAxis(key, out var v) ? v : 0f;
@@ -198,6 +229,23 @@ float startTimeSeconds) : IRebindSession
 
     private void ApplyAndComplete(ControlKey newControl)
     {
+        if (!IsAllowedCandidate(newControl, _originalBinding.Trigger.Type))
+        {
+            // Shouldn't happen if capture filtered correctly, but keep it airtight.
+            Complete(new RebindResult { Succeeded = false, Error = "That control is not allowed." });
+            return;
+        }
+
+        if (_request.DisallowConflictsInSameMap && IsConflictInSameMap(newControl))
+        {
+            Complete(new RebindResult
+            {
+                Succeeded = false,
+                Error = "That control is already bound in this map."
+            });
+            return;
+        }
+
         // Replace Binding because Binding/Trigger are init-only
         var old = _originalBinding;
 
@@ -232,5 +280,16 @@ float startTimeSeconds) : IRebindSession
         if (_completed) return;
         _completed = true;
         OnCompleted?.Invoke(result);
+    }
+    private bool IsConflictInSameMap(ControlKey key)
+    {
+        for (int i = 0; i < _mapDef.Bindings.Count; i++)
+        {
+            if (i == _bindingIndex) continue;
+            var b = _mapDef.Bindings[i];
+            if (b.Trigger.Control.Equals(key))
+                return true;
+        }
+        return false;
     }
 }
