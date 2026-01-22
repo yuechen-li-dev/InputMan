@@ -96,7 +96,7 @@ public sealed class StrideInputManSystem : GameSystem
                 else
                     _watchedAxes.Add(control);
                 //Debug: Get all bindings
-                System.Diagnostics.Debug.WriteLine($"BIND: map={map.Id.Name} name={binding.Name} type={binding.Trigger.Type} ctrl={binding.Trigger.Control.Device}:{binding.Trigger.Control.DeviceIndex}:{binding.Trigger.Control.Code}");
+                //System.Diagnostics.Debug.WriteLine($"BIND: map={map.Id.Name} name={binding.Name} type={binding.Trigger.Type} ctrl={binding.Trigger.Control.Device}:{binding.Trigger.Control.DeviceIndex}:{binding.Trigger.Control.Code}");
             }
         }
 

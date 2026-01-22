@@ -1,6 +1,6 @@
 <Solution>
-  <Project Path="InputMan.StrideConn.Tests/InputMan.StrideConn.Tests.csproj" Id="61dd95d6-6a5d-48bb-867a-2914027b2bac" />
   <Project Path="src/InputMan.Core/InputMan.Core.csproj" />
-  <Project Path="src/Inputman.StrideConn/Inputman.StrideConn.csproj" DisplayName="InputMan.StrideConn" />
+  <Project Path="src/Inputman.StrideConn/Inputman.StrideConn.csproj" />
   <Project Path="tests/InputMan.Core.Tests/InputMan.Core.Tests.csproj" />
+  <Project Path="tests/InputMan.StrideConn.Tests/InputMan.StrideConn.Tests.csproj" />
 </Solution>

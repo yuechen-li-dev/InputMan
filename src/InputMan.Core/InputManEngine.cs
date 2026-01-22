@@ -436,7 +436,7 @@ public sealed class InputManEngine : IInputMan
         return v;
     }
 
-    //Helper function for rebind.
+    // Helper function for rebind.
     internal void RebuildKnownControlsFromRebind()
     {
         RebuildKnownControls();

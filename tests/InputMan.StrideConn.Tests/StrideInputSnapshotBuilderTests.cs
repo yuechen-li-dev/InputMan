@@ -132,11 +132,47 @@ public sealed class StrideInputSnapshotBuilderTests
         Assert.False(snap.TryGetAxis(dx, out _));
     }
 
-   /* [Fact]
+    [Fact]
     public void Rebind_CanBindToKeyNotInKnownControls_WhenCandidatesProvided()
     {
-        // Arrange: profile with Jump on Space only
-        var profile = *//* build minimal profile with Gameplay map and binding named Jump.Primary *//*;
+        var Jump = new ActionId("Jump");
+
+        var gameplay = new ActionMapDefinition
+        {
+            Id = new ActionMapId("Gameplay"),
+            Priority = 0,
+            CanConsume = false,
+            Bindings =
+            [
+                new Binding
+        {
+            // IMPORTANT: matches your test BindingNameOrSlot
+            Name = "Jump.Primary",
+
+            Trigger = new BindingTrigger
+            {
+                Control = new ControlKey(DeviceKind.Keyboard, 0, (int)Keys.Space),
+                Type = TriggerType.Button,
+                ButtonEdge = ButtonEdge.Pressed,
+            },
+
+            Output = new ActionOutput(Jump),
+            Consume = ConsumeMode.None,
+        }
+            ]
+        };
+
+        var profile = new InputProfile
+        {
+            Maps = new Dictionary<string, ActionMapDefinition>
+            {
+                ["Gameplay"] = gameplay
+            },
+
+            // Optional for this test; leave empty unless your engine expects non-null Axis2 dict
+            Axis2 = new Dictionary<string, Axis2Definition>()
+        };
+
         var engine = new InputManEngine(profile);
 
         var completed = (RebindResult?)null;
@@ -171,6 +207,6 @@ public sealed class StrideInputSnapshotBuilderTests
         Assert.NotNull(completed);
         Assert.True(completed!.Succeeded);
         Assert.Equal(new ControlKey(DeviceKind.Keyboard, 0, (int)Keys.K), completed.BoundControl);
-    }*/
+    }
 
 }
