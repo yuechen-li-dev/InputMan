@@ -37,17 +37,13 @@ public sealed class PauseOverlay : SyncScript
             .Select(k => new ControlKey(DeviceKind.Keyboard, DeviceIndex: 0, Code: (int)k))];
     }
 
-    static IReadOnlyList<ControlKey> BuildMouseButtons()
-    {
-        return
-        [
+    static IReadOnlyList<ControlKey> BuildMouseButtons() => [
         new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Left),
         new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Right),
         new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Middle),
         new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Extended1),
         new ControlKey(DeviceKind.Mouse, 0, (int)MouseButton.Extended2),
         ];
-    }
 
     public override void Start()
     {

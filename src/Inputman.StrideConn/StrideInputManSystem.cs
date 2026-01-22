@@ -50,7 +50,20 @@ public sealed class StrideInputManSystem : GameSystem
         var dt = (float)gameTime.Elapsed.TotalSeconds;
         var t = (float)gameTime.Total.TotalSeconds;
 
-        var snapshot = StrideInputSnapshotBuilder.Build(_input, _watchedButtons, _watchedAxes);
+        IReadOnlyCollection<ControlKey> buttons = _watchedButtons;
+        IReadOnlyCollection<ControlKey> axes = _watchedAxes;
+
+        if (_engine.IsRebinding)
+        {
+            // Prefer explicit candidate lists when provided
+            if (_engine.RebindCandidateButtons is { Count: > 0 } candButtons)
+                buttons = candButtons;
+
+            if (_engine.RebindCandidateAxes is { Count: > 0 } candAxes)
+                axes = candAxes;
+        }
+
+        var snapshot = StrideInputSnapshotBuilder.Build(_input, buttons, axes);
 
         _engine.Tick(snapshot, dt, t);
     }

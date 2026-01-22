@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace InputMan.Core;
 
@@ -31,6 +32,7 @@ public interface IRebindSession
 {
     event Action<RebindProgress>? OnProgress;
     event Action<RebindResult>? OnCompleted;
+    RebindRequest Request { get; }
 
     void Cancel();
 }
@@ -60,11 +62,14 @@ internal sealed class RebindSession : IRebindSession
     public event Action<RebindProgress>? OnProgress;
     public event Action<RebindResult>? OnCompleted;
 
+    // Expose rebind request for access to all keys
+    public RebindRequest Request => _request;
     private IReadOnlyList<ControlKey> ButtonsToWatch =>
-    _request.CandidateButtons ?? _knownButtons;
+            _request.CandidateButtons ?? _knownButtons;
 
     private IReadOnlyList<ControlKey> AxesToWatch =>
-        _request.CandidateAxes ?? _knownAxes;
+            _request.CandidateAxes ?? _knownAxes;
+
 
     public RebindSession(
         InputManEngine engine,
@@ -74,7 +79,7 @@ internal sealed class RebindSession : IRebindSession
         Binding binding,
         ControlKey[] knownButtons,
         ControlKey[] knownAxes,
-        float startTimeSeconds)
+    float startTimeSeconds)
     {
         _engine = engine;
         _request = request;

@@ -34,8 +34,16 @@ public sealed class InputManEngine : IInputMan
     private readonly HashSet<ControlKey> _consumedControls = [];
     private readonly HashSet<AxisId> _unclampedAxes = [];
 
+    // Rebinding Specific section
     private RebindSession? _rebind;
+    public bool IsRebinding => _rebind != null;
+    public IReadOnlyCollection<ControlKey>? RebindCandidateButtons
+        => _rebind?.Request.CandidateButtons;
 
+    public IReadOnlyCollection<ControlKey>? RebindCandidateAxes
+        => _rebind?.Request.CandidateAxes;
+    
+    //Updates
     public long FrameIndex { get; private set; }
     public float DeltaTimeSeconds { get; private set; }
     private float _timeSeconds;

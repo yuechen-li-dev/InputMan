@@ -131,4 +131,46 @@ public sealed class StrideInputSnapshotBuilderTests
         // Because the builder is sparse, a zero axis should not be stored at all.
         Assert.False(snap.TryGetAxis(dx, out _));
     }
+
+   /* [Fact]
+    public void Rebind_CanBindToKeyNotInKnownControls_WhenCandidatesProvided()
+    {
+        // Arrange: profile with Jump on Space only
+        var profile = *//* build minimal profile with Gameplay map and binding named Jump.Primary *//*;
+        var engine = new InputManEngine(profile);
+
+        var completed = (RebindResult?)null;
+
+        var session = engine.StartRebind(new RebindRequest
+        {
+            Map = new ActionMapId("Gameplay"),
+            BindingNameOrSlot = "Jump.Primary",
+            CandidateButtons =
+            [
+            new ControlKey(DeviceKind.Keyboard, 0, (int)Keys.Space),
+            new ControlKey(DeviceKind.Keyboard, 0, (int)Keys.K),
+        ]
+        });
+
+        session.OnCompleted += r => completed = r;
+
+        // Tick #1: seed frame
+        engine.Tick(snapshot: new InputSnapshot(new Dictionary<ControlKey, bool>(), new Dictionary<ControlKey, float>()),
+                    deltaTimeSeconds: 0.016f, timeSeconds: 0.0f);
+
+        // Tick #2: press K
+        var buttons = new Dictionary<ControlKey, bool>
+        {
+            [new ControlKey(DeviceKind.Keyboard, 0, (int)Keys.K)] = true
+        };
+
+        engine.Tick(new InputSnapshot(buttons, new Dictionary<ControlKey, float>()),
+                    0.016f, 0.016f);
+
+        // Assert
+        Assert.NotNull(completed);
+        Assert.True(completed!.Succeeded);
+        Assert.Equal(new ControlKey(DeviceKind.Keyboard, 0, (int)Keys.K), completed.BoundControl);
+    }*/
+
 }
