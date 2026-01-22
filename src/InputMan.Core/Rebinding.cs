@@ -18,13 +18,13 @@ public sealed class RebindRequest
 
     // --- Guardrails ---
     /// <summary>If provided, only these device kinds can be captured.</summary>
-    public IReadOnlySet<DeviceKind>? AllowedDevices { get; init; }
+    public IReadOnlySet<DeviceKind>? AllowedDevices { get; set; }
 
     /// <summary>If provided, these specific controls can never be captured.</summary>
-    public IReadOnlySet<ControlKey>? ForbiddenControls { get; init; }
+    public IReadOnlySet<ControlKey>? ForbiddenControls { get; set; }
 
     /// <summary>Reject binding to a control already used by another binding in the same map.</summary>
-    public bool DisallowConflictsInSameMap { get; init; } = true;
+    public bool DisallowConflictsInSameMap { get; set; } = true;
 }
 
 public readonly record struct RebindProgress(string Message, float SecondsRemaining);
