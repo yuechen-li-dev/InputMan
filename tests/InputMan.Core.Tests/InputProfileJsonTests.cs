@@ -51,7 +51,7 @@ public sealed class InputProfileJsonTests
         var mouseDx = new ControlKey(DeviceKind.Mouse, DeviceIndex: 0, Code: 1001); // pretend MouseDeltaX
         var padA = new ControlKey(DeviceKind.Gamepad, DeviceIndex: 0, Code: 100);   // pretend A button
 
-        var moveY = new AxisId("MoveY");
+        var moveY = new ActionId("MoveY");
         var lookX = new AxisId("LookMouseX");
         var jump = new ActionId("Jump");
 
@@ -65,18 +65,20 @@ public sealed class InputProfileJsonTests
                 // W -> MoveY (+1)
                 new Binding
                 {
+                    Name = "MoveY",
                     Trigger = new BindingTrigger
                     {
                         Control = keyW,
                         Type = TriggerType.Button,
                         ButtonEdge = ButtonEdge.Down
                     },
-                    Output = new AxisOutput(moveY, 1f)
+                    Output = new ActionOutput(moveY)
                 },
 
                 // Mouse delta X -> LookMouseX (unclamped by our new engine rule)
                 new Binding
                 {
+                    Name = "LookMouseX",
                     Trigger = new BindingTrigger
                     {
                         Control = mouseDx,
@@ -89,6 +91,7 @@ public sealed class InputProfileJsonTests
                 // Gamepad A -> Jump action
                 new Binding
                 {
+                    Name = "Jump",
                     Trigger = new BindingTrigger
                     {
                         Control = padA,
