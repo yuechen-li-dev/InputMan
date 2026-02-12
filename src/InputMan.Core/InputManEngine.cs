@@ -252,6 +252,11 @@ public sealed class InputManEngine : IInputMan
 
     public InputProfile ExportProfile() => _profile;
 
+    /// <summary>
+    /// Get the current live profile. Used internally by RebindSession for conflict detection.
+    /// </summary>
+    internal InputProfile GetCurrentProfile() => _profile;
+
     public void ImportProfile(InputProfile profile)
     {
         _profile = profile ?? new InputProfile();

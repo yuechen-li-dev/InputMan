@@ -25,6 +25,9 @@ public sealed class RebindRequest
 
     /// <summary>Reject binding to a control already used by another binding in the same map.</summary>
     public bool DisallowConflictsInSameMap { get; set; } = true;
+
+    /// <summary>Reject binding to a control already used by another binding in ANY map (stricter).</summary>
+    public bool DisallowConflictsAcrossAllMaps { get; set; } = false;
 }
 
 public readonly record struct RebindProgress(string Message, float SecondsRemaining);
@@ -53,7 +56,7 @@ internal sealed class RebindSession(
     Binding binding,
     ControlKey[] knownButtons,
     ControlKey[] knownAxes,
-float startTimeSeconds) : IRebindSession
+    float startTimeSeconds) : IRebindSession
 {
     private readonly InputManEngine _engine = engine;
     private readonly RebindRequest _request = request;
@@ -69,10 +72,10 @@ float startTimeSeconds) : IRebindSession
     private bool _seeded;
     private bool _completed;
 
-    // Track “already down” buttons so we only capture NEW presses
+    // Track "already down" buttons so we only capture NEW presses
     private readonly HashSet<ControlKey> _downButtons = [];
 
-    // Track prior axis magnitudes so we can detect “crossing a small threshold”
+    // Track prior axis magnitudes so we can detect "crossing a small threshold"
     private readonly Dictionary<ControlKey, float> _prevAxis = [];
 
     public event Action<RebindProgress>? OnProgress;
@@ -124,7 +127,7 @@ float startTimeSeconds) : IRebindSession
 
         OnProgress?.Invoke(new RebindProgress("Waiting for input…", remaining));
 
-        // Seed state once so held keys don’t instantly bind
+        // Seed state once so held keys don't instantly bind
         if (!_seeded)
         {
             Seed(snapshot);
@@ -132,7 +135,7 @@ float startTimeSeconds) : IRebindSession
             return;
         }
 
-        // Rebind type is determined by the binding we’re editing (button vs axis/delta)
+        // Rebind type is determined by the binding we're editing (button vs axis/delta)
         var trigType = _originalBinding.Trigger.Type;
 
         if (trigType == TriggerType.Button)
@@ -213,7 +216,7 @@ float startTimeSeconds) : IRebindSession
             var curAbs = MathF.Abs(cur);
             var prevAbs = MathF.Abs(prev);
 
-            // Detect “crossing” the threshold to avoid binding on constant noise
+            // Detect "crossing" the threshold to avoid binding on constant noise
             if (prevAbs < captureThreshold && curAbs >= captureThreshold)
             {
                 captured = key;
@@ -236,12 +239,24 @@ float startTimeSeconds) : IRebindSession
             return;
         }
 
+        // FIX: Check conflicts using the LIVE profile state from engine, not stale snapshot
         if (_request.DisallowConflictsInSameMap && IsConflictInSameMap(newControl))
         {
             Complete(new RebindResult
             {
                 Succeeded = false,
                 Error = "That control is already bound in this map."
+            });
+            return;
+        }
+
+        // NEW: Option to check conflicts across ALL maps
+        if (_request.DisallowConflictsAcrossAllMaps && IsConflictAcrossAllMaps(newControl))
+        {
+            Complete(new RebindResult
+            {
+                Succeeded = false,
+                Error = "That control is already bound in another map."
             });
             return;
         }
@@ -281,15 +296,62 @@ float startTimeSeconds) : IRebindSession
         _completed = true;
         OnCompleted?.Invoke(result);
     }
+
+    /// <summary>
+    /// Check if control conflicts with another binding IN THE SAME MAP.
+    /// FIX: Now queries the engine's live profile instead of using stale binding list.
+    /// </summary>
     private bool IsConflictInSameMap(ControlKey key)
     {
-        for (int i = 0; i < _mapDef.Bindings.Count; i++)
+        // Get the current live profile from engine
+        var profile = _engine.GetCurrentProfile();
+
+        // Find our map in the live profile
+        if (!profile.Maps.TryGetValue(_mapDef.Id.Name, out var liveMapDef))
+            return false; // Map not found (shouldn't happen)
+
+        // Check all bindings in this map
+        for (int i = 0; i < liveMapDef.Bindings.Count; i++)
         {
-            if (i == _bindingIndex) continue;
-            var b = _mapDef.Bindings[i];
-            if (b.Trigger.Control.Equals(key))
+            // Skip the binding we're currently rebinding
+            if (i == _bindingIndex)
+                continue;
+
+            var binding = liveMapDef.Bindings[i];
+
+            // Check if this binding uses the same control
+            if (binding.Trigger.Control.Equals(key))
                 return true;
         }
+
+        return false;
+    }
+
+    /// <summary>
+    /// NEW: Check if control conflicts with ANY binding across ALL maps in the profile.
+    /// </summary>
+    private bool IsConflictAcrossAllMaps(ControlKey key)
+    {
+        var profile = _engine.GetCurrentProfile();
+
+        foreach (var mapKvp in profile.Maps)
+        {
+            var mapDef = mapKvp.Value;
+
+            // Check all bindings in this map
+            for (int i = 0; i < mapDef.Bindings.Count; i++)
+            {
+                // If we're checking the same map, skip the binding we're rebinding
+                if (mapDef.Id.Equals(_mapDef.Id) && i == _bindingIndex)
+                    continue;
+
+                var binding = mapDef.Bindings[i];
+
+                if (binding.Trigger.Control.Equals(key))
+                    return true;
+            }
+        }
+
         return false;
     }
 }
