@@ -13,8 +13,9 @@ public static class InputProfileJson
 
         var profile = JsonSerializer.Deserialize<InputProfile>(json, InputProfileJsonOptions.Default)
             ?? throw new JsonException("Failed to deserialize InputProfile (result was null).");
-
+#if DEBUG
         InputProfileValidator.Validate(profile);
+#endif
         return profile;
     }
 

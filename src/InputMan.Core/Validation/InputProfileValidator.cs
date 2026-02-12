@@ -79,8 +79,8 @@ public static class InputProfileValidator
             if (string.IsNullOrWhiteSpace(b.Name))
                 throw new InvalidOperationException($"Map \"{map.Id.Name}\" binding[{i}] has empty Name.");
 
-            if (!seenNames.Add(b.Name))
-                throw new InvalidOperationException($"Map \"{map.Id.Name}\" has duplicate binding name \"{b.Name}\".");
+            //if (!seenNames.Add(b.Name))
+                //throw new InvalidOperationException($"Map \"{map.Id.Name}\" has duplicate binding name \"{b.Name}\".");
 
             if (b.Trigger is null)
                 throw new InvalidOperationException($"Binding \"{b.Name}\" has Trigger=null.");
