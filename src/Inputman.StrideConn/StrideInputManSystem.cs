@@ -1,12 +1,8 @@
 ﻿using InputMan.Core;
-using Silk.NET.SDL;
 using Stride.Core;
-using Stride.Core.DataSerializers;
-using Stride.Core.Mathematics;
 using Stride.Engine;
 using Stride.Games;
 using Stride.Input;
-using System.Runtime.ConstrainedExecution;
 
 
 namespace InputMan.StrideConn;
@@ -41,7 +37,7 @@ public sealed class StrideInputManSystem : GameSystem
         // Tick early so scripts can read stable state
         UpdateOrder = -1;
 
-        // Use a counter to keep track of revision for rebuild. Could be made cleaner in future. 
+        // Use a counter to keep track of revision for rebuild. Could be made cleaner in the future. 
         _lastProfileRevision = _engine.ProfileRevision;
         RebuildWatchedControls(_engine.ExportProfile());
 

@@ -1,6 +1,8 @@
 ﻿using Stride.Core.Mathematics;
 using Stride.Input;
 
+namespace InputMan.StrideConn;
+
 public sealed class StrideInputSource(InputManager input) : IStrideInputSource
 {
     public bool IsKeyDown(Keys key) => input.IsKeyDown(key);
