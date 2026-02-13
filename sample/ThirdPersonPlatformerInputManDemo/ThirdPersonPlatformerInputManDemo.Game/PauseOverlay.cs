@@ -1,108 +1,76 @@
 ﻿#nullable enable
 
-using InputMan.Core;
 using Stride.Core.Mathematics;
 using Stride.Engine;
-using Stride.Input;
 using System;
+using System.Linq;
 
 namespace ThirdPersonPlatformerInputManDemo;
 
 /// <summary>
-/// Pause overlay - Step 1: Now uses RebindingManager for rebinding logic.
+/// Pause overlay UI - Step 2: Now just renders UI, all logic is in PauseController.
 /// Still uses DebugText temporarily (will be replaced with ImGui in Step 3).
 /// </summary>
 public sealed class PauseOverlay : SyncScript
 {
-    private IInputMan _inputMan = null!;
-    private RebindingManager _rebindManager = null!;
-    private bool _paused;
-
-    // Map IDs
-    private static readonly ActionMapId GameplayMap = new("Gameplay");
-    private static readonly ActionMapId UIMap = new("UI");
-
-    // Actions - now using InputMan for everything!
-    private static readonly ActionId Pause = new("Pause");
-    private static readonly ActionId RebindJump = new("RebindJump"); // NEW: J key via InputMan
+    /// <summary>
+    /// Reference to the PauseController (assign in Stride editor or find automatically).
+    /// </summary>
+    public PauseController? Controller { get; set; }
 
     public override void Start()
     {
-        _inputMan = Game.Services.GetService<IInputMan>()
-            ?? throw new InvalidOperationException(
-                "IInputMan not found. Add InstallInputMan to your scene.");
+        // Try to find PauseController if not assigned
+        Controller ??= Entity.Scene?.Entities
+            .SelectMany(e => e.GetAll<PauseController>())
+            .FirstOrDefault();
 
-        // Create rebinding manager
-        _rebindManager = new RebindingManager(_inputMan);
+        if (Controller == null)
+        {
+            throw new InvalidOperationException(
+                "PauseController not found! Make sure it's in the scene.");
+        }
 
-        // Start with both maps active
-        _inputMan.SetMaps(UIMap, GameplayMap);
+        // Subscribe to pause events
+        Controller.OnPaused += OnGamePaused;
+        Controller.OnResumed += OnGameResumed;
+
+        Log.Info("PauseOverlay initialized");
     }
 
     public override void Update()
     {
-        // Toggle pause (InputMan)
-        if (_inputMan.WasPressed(Pause))
-            TogglePause();
-
-        if (!_paused)
-            return;
-
-        // Draw UI
-        DrawPauseMenu();
-
-        // Rebind Jump when J is pressed (InputMan!)
-        if (!_rebindManager.IsRebinding && _inputMan.WasPressed(RebindJump))
+        // Only draw when paused
+        if (Controller?.IsPaused == true)
         {
-            _rebindManager.StartRebind(BindingNames.JumpKeyboard, GameplayMap);
-        }
-
-        // Cancel rebind with Escape (InputMan!)
-        // Note: We need to add an Escape action to the UI map for this
-        if (_rebindManager.IsRebinding && Input.IsKeyPressed(Keys.Escape))
-        {
-            // TODO: This still uses Stride Input - will be fixed when we add
-            // a proper "Cancel" action to the UI map
-            _rebindManager.CancelRebind();
+            DrawPauseMenu();
         }
     }
 
-    private void TogglePause()
+    private void OnGamePaused()
     {
-        _paused = !_paused;
+        Log.Info("PauseOverlay: Game paused, showing menu");
+    }
 
-        if (_paused)
-        {
-            // Pause: UI map only (blocks gameplay)
-            _inputMan.SetMaps(UIMap);
-
-            // Show cursor
-            Input.UnlockMousePosition();
-            Game.IsMouseVisible = true;
-
-            // Cancel any active rebind
-            _rebindManager.CancelRebind();
-        }
-        else
-        {
-            // Resume: both maps active
-            _inputMan.SetMaps(UIMap, GameplayMap);
-
-            // Hide cursor if it was locked before
-            // (PlayerInput will handle re-locking when needed)
-        }
+    private void OnGameResumed()
+    {
+        Log.Info("PauseOverlay: Game resumed, hiding menu");
     }
 
     private void DrawPauseMenu()
     {
+        if (Controller == null) return;
+
+        // Draw pause menu with DebugText (temporary)
         DebugText.Print("=== PAUSED ===", new Int2(10, 10));
         DebugText.Print("Esc/M/Start: Resume", new Int2(10, 30));
         DebugText.Print("J: Rebind Jump", new Int2(10, 50));
 
         // Show rebinding status
-        if (!string.IsNullOrWhiteSpace(_rebindManager.StatusMessage))
+        var status = Controller.RebindManager.StatusMessage;
+        if (!string.IsNullOrWhiteSpace(status))
         {
-            DebugText.Print(_rebindManager.StatusMessage, new Int2(10, 80));
+            DebugText.Print(status, new Int2(10, 80));
         }
     }
 }
