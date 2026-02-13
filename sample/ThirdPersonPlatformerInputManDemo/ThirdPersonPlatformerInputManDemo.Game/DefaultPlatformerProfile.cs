@@ -5,116 +5,168 @@ using System.Collections.Generic;
 using static InputMan.Core.Bind;
 using static InputMan.StrideConn.StrideKeys;
 
-namespace ThirdPersonPlatformerInputManDemo
+namespace ThirdPersonPlatformerInputManDemo;
+
+/// <summary>
+/// Default input profile for third-person platformer.
+/// Supports keyboard + mouse + up to 4 gamepads.
+/// </summary>
+public static class DefaultPlatformerProfile
 {
-    public static class DefaultPlatformerProfile
+    // Action/Axis IDs (referenced by PlayerInput.cs)
+    public static readonly ActionId Jump = new("Jump");
+    public static readonly ActionId LookLock = new("LookLock");
+    public static readonly ActionId LookUnlock = new("LookUnlock");
+    public static readonly ActionId Pause = new("Pause");
+    public static readonly ActionId Confirm = new("Confirm");
+    public static readonly ActionId Cancel = new("Cancel");
+
+    public static readonly AxisId MoveX = new("MoveX");
+    public static readonly AxisId MoveY = new("MoveY");
+    public static readonly AxisId LookStickX = new("LookStickX");
+    public static readonly AxisId LookStickY = new("LookStickY");
+    public static readonly AxisId LookMouseX = new("LookMouseX");
+    public static readonly AxisId LookMouseY = new("LookMouseY");
+
+    public static readonly Axis2Id Move = new("Move");
+    public static readonly Axis2Id LookStick = new("LookStick");
+    public static readonly Axis2Id LookMouse = new("LookMouse");
+
+    public static InputProfile Create()
     {
-        // IDs used by PlayerInput.cs
-        public static readonly ActionId Jump = new("Jump");
+        var gameplay = CreateGameplayMap();
+        var ui = CreateUIMap();
 
-        public static readonly ActionId LookLock = new("LookLock");
-        public static readonly ActionId LookUnlock = new("LookUnlock");
-
-        public static readonly AxisId MoveX = new("MoveX");
-        public static readonly AxisId MoveY = new("MoveY");
-
-        public static readonly AxisId LookStickX = new("LookStickX");
-        public static readonly AxisId LookStickY = new("LookStickY");
-
-        public static readonly AxisId LookMouseX = new("LookMouseX");
-        public static readonly AxisId LookMouseY = new("LookMouseY");
-
-        public static readonly Axis2Id Move = new("Move");
-        public static readonly Axis2Id LookStick = new("LookStick");
-        public static readonly Axis2Id LookMouse = new("LookMouse");
-
-        public static readonly ActionId Pause = new("Pause");
-        public static readonly ActionId Confirm = new("Confirm"); // optional
-        public static readonly ActionId Cancel = new("Cancel");   // optional
-
-        public static InputProfile Create()
+        return new InputProfile
         {
-            var gameplay = new ActionMapDefinition
+            Maps = new Dictionary<string, ActionMapDefinition>
             {
-                Id = new ActionMapId("Gameplay"),
-                Priority = 10,
-                CanConsume = false,
-                Bindings =
-                [
-                    // --- Move: WASD (buttons -> axes) ---
-                    ButtonAxis(K(Keys.A), MoveX, -1, name: "MoveLeft.Kb"),
-                    ButtonAxis(K(Keys.D), MoveX, +1, name: "MoveRight.Kb"),
-                    ButtonAxis(K(Keys.S), MoveY, -1, name: "MoveBack.Kb"),
-                    ButtonAxis(K(Keys.W), MoveY, +1, name: "MoveFwd.Kb"),
-
-                    // --- Jump ---
-                    Action(K(Keys.Space), Jump, ButtonEdge.Pressed, name: "Jump.Kb"),
-
-                    // --- Mouse look (delta axes) ---
-                    DeltaAxis(MouseDeltaX, LookMouseX, +1, name: "LookLeftRight.Kb"),
-                    DeltaAxis(MouseDeltaY, LookMouseY, +1, name: "LookUpDown.Kb"),
-
-                    // --- Mouse Lock ---
-                    Action(M(MouseButton.Left), LookLock, ButtonEdge.Pressed, name: "LookLock.Mouse"),
-                    Action(K(Keys.Escape), LookUnlock, ButtonEdge.Pressed, name: "LookUnlock.Kb"),
-
-                ]
-            };
-
-            // Multiple gamepads: add bindings for indices 0..3 (MVP). Can make StrideConn dynamically expand these for connected pads in the future.
-            for (byte i = 0; i < 4; i++)
+                ["Gameplay"] = gameplay,
+                ["UI"] = ui,
+            },
+            Axis2 = new Dictionary<string, Axis2Definition>
             {
-                // Move
-                gameplay.Bindings.Add(Axis(PadLeftX(i), MoveX, +1));
-                gameplay.Bindings.Add(Axis(PadLeftY(i), MoveY, +1));
-                // Look
-                gameplay.Bindings.Add(Axis(PadRightX(i), LookStickX, +1));
-                gameplay.Bindings.Add(Axis(PadRightY(i), LookStickY, +1));
-                // Jump
-                gameplay.Bindings.Add(Action(PadBtn(i, GamePadButton.A), Jump, ButtonEdge.Pressed));
+                ["Move"] = new Axis2Definition { Id = Move, X = MoveX, Y = MoveY },
+                ["LookStick"] = new Axis2Definition { Id = LookStick, X = LookStickX, Y = LookStickY },
+                ["LookMouse"] = new Axis2Definition { Id = LookMouse, X = LookMouseX, Y = LookMouseY },
             }
+        };
+    }
 
-            var ui = new ActionMapDefinition
+    private static ActionMapDefinition CreateGameplayMap()
+    {
+        var map = new ActionMapDefinition
+        {
+            Id = new ActionMapId("Gameplay"),
+            Priority = 10,
+            CanConsume = false,
+            Bindings = new List<Binding>
             {
-                Id = new ActionMapId("UI"),
-                Priority = 100,
-                CanConsume = true,
-                Bindings =
-                [
-                    // Pause toggle (works even when UI is active)
-                    Action(K(Keys.Escape), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All, name: "Pause.Kb.1"),
-                    Action(K(Keys.M), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All, name: "Pause.Kb.2"),
-                    Action(PadBtn(0, GamePadButton.Start), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All),
+                // Keyboard movement (WASD)
+                ButtonAxis(K(Keys.A), MoveX, -1, name: BindingNames.MoveLeftKeyboard),
+                ButtonAxis(K(Keys.D), MoveX, +1, name: BindingNames.MoveRightKeyboard),
+                ButtonAxis(K(Keys.S), MoveY, -1, name: BindingNames.MoveBackKeyboard),
+                ButtonAxis(K(Keys.W), MoveY, +1, name: BindingNames.MoveForwardKeyboard),
 
-                    // Optional confirm/cancel for menus
-                    Action(K(Keys.Enter), Confirm, ButtonEdge.Pressed, consume: ConsumeMode.All),
-                    Action(K(Keys.Back), Cancel, ButtonEdge.Pressed, consume: ConsumeMode.All),
-                    Action(PadBtn(0, GamePadButton.A), Confirm, ButtonEdge.Pressed, consume: ConsumeMode.All),
-                    Action(PadBtn(0, GamePadButton.B), Cancel, ButtonEdge.Pressed, consume: ConsumeMode.All),
-                ]
-            };
+                // Keyboard jump
+                Action(K(Keys.Space), Jump, ButtonEdge.Pressed, name: BindingNames.JumpKeyboard),
 
-            for (byte i = 0; i < 4; i++)
-            {
-                ui.Bindings.Add(Action(PadBtn(i, GamePadButton.Start), Pause, ButtonEdge.Pressed, consume: ConsumeMode.All));
-                ui.Bindings.Add(Action(PadBtn(i, GamePadButton.A), Confirm, ButtonEdge.Pressed, consume: ConsumeMode.All));
-                ui.Bindings.Add(Action(PadBtn(i, GamePadButton.B), Cancel, ButtonEdge.Pressed, consume: ConsumeMode.All));
+                // Mouse look (delta axes)
+                DeltaAxis(MouseDeltaX, LookMouseX, +1, name: "LookLeftRight.Mouse"),
+                DeltaAxis(MouseDeltaY, LookMouseY, +1, name: "LookUpDown.Mouse"),
+
+                // Mouse lock/unlock
+                Action(M(MouseButton.Left), LookLock, ButtonEdge.Pressed, name: BindingNames.LookLockMouse),
+                Action(K(Keys.Escape), LookUnlock, ButtonEdge.Pressed, name: BindingNames.LookUnlockKeyboard),
             }
+        };
 
-            return new InputProfile
+        // Add gamepad bindings for up to 4 controllers
+        AddGamepadBindings(map, maxPads: 4);
+
+        return map;
+    }
+
+    private static ActionMapDefinition CreateUIMap()
+    {
+        var map = new ActionMapDefinition
+        {
+            Id = new ActionMapId("UI"),
+            Priority = 100,
+            CanConsume = true,
+            Bindings = new List<Binding>
             {
-                Maps = new Dictionary<string, ActionMapDefinition>
-                {
-                    ["Gameplay"] = gameplay,
-                    ["UI"] = ui,
-                },
-                Axis2 = new Dictionary<string, Axis2Definition>
-                {
-                    ["Move"] = new Axis2Definition { Id = Move, X = MoveX, Y = MoveY },
-                    ["LookStick"] = new Axis2Definition { Id = LookStick, X = LookStickX, Y = LookStickY },
-                    ["LookMouse"] = new Axis2Definition { Id = LookMouse, X = LookMouseX, Y = LookMouseY },
-                }
-            };
+                // Pause (keyboard)
+                Action(K(Keys.Escape), Pause, ButtonEdge.Pressed,
+                    ConsumeMode.All, BindingNames.PauseKeyboard1),
+                Action(K(Keys.M), Pause, ButtonEdge.Pressed,
+                    ConsumeMode.All, BindingNames.PauseKeyboard2),
+
+                // Confirm/Cancel (keyboard)
+                Action(K(Keys.Enter), Confirm, ButtonEdge.Pressed, ConsumeMode.All),
+                Action(K(Keys.Back), Cancel, ButtonEdge.Pressed, ConsumeMode.All),
+            }
+        };
+
+        // Add UI gamepad bindings
+        AddGamepadUIBindings(map, maxPads: 4);
+
+        return map;
+    }
+
+    /// <summary>
+    /// Adds standard gameplay bindings for multiple gamepads.
+    /// </summary>
+    private static void AddGamepadBindings(
+        ActionMapDefinition map,
+        int maxPads)
+    {
+        for (byte i = 0; i < maxPads; i++)
+        {
+            // Movement (left stick)
+            map.Bindings.Add(Axis(PadLeftX(i), MoveX, +1));
+            map.Bindings.Add(Axis(PadLeftY(i), MoveY, +1));
+
+            // Camera (right stick)
+            map.Bindings.Add(Axis(PadRightX(i), LookStickX, +1));
+            map.Bindings.Add(Axis(PadRightY(i), LookStickY, +1));
+
+            // Jump (A button)
+            map.Bindings.Add(Action(
+                PadBtn(i, GamePadButton.A),
+                Jump,
+                ButtonEdge.Pressed,
+                name: $"Jump.Pad{i}"));
+        }
+    }
+
+    /// <summary>
+    /// Adds UI bindings for multiple gamepads.
+    /// </summary>
+    private static void AddGamepadUIBindings(
+        ActionMapDefinition map,
+        int maxPads)
+    {
+        for (byte i = 0; i < maxPads; i++)
+        {
+            map.Bindings.Add(Action(
+                PadBtn(i, GamePadButton.Start),
+                Pause,
+                ButtonEdge.Pressed,
+                ConsumeMode.All,
+                $"Pause.Pad{i}"));
+
+            map.Bindings.Add(Action(
+                PadBtn(i, GamePadButton.A),
+                Confirm,
+                ButtonEdge.Pressed,
+                ConsumeMode.All));
+
+            map.Bindings.Add(Action(
+                PadBtn(i, GamePadButton.B),
+                Cancel,
+                ButtonEdge.Pressed,
+                ConsumeMode.All));
         }
     }
 }
