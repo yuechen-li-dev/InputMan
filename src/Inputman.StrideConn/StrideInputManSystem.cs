@@ -21,15 +21,32 @@ public sealed class StrideInputManSystem : GameSystem
 
     private int _lastProfileRevision;
 
+    /// <summary>
+    /// Creates a new StrideInputManSystem with no initial maps activated.
+    /// You can activate maps later via IInputMan.SetMaps() or PushMap().
+    /// </summary>
     public StrideInputManSystem(IServiceRegistry services, InputProfile profile)
+        : this(services, profile, null)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new StrideInputManSystem with the specified initial maps activated.
+    /// Maps are activated in the order provided (first map = lowest priority).
+    /// </summary>
+    public StrideInputManSystem(
+        IServiceRegistry services,
+        InputProfile profile,
+        params ActionMapId[]? initialMaps)
     : base(services)
     {
         _input = services.GetService<InputManager>()
             ?? throw new InvalidOperationException("Stride InputManager service is missing.");
         _engine = new InputManEngine(profile);
 
-        //Push map to activate. TODO: maybe make it configuarble later.
-        _engine.PushMap(new ActionMapId("Gameplay"));
+        // Activate initial maps if provided
+        if (initialMaps != null && initialMaps.Length > 0)
+            _engine.SetMaps(initialMaps);
 
         // Register service
         services.AddService<IInputMan>(_engine);
@@ -37,7 +54,7 @@ public sealed class StrideInputManSystem : GameSystem
         // Tick early so scripts can read stable state
         UpdateOrder = -1;
 
-        // Use a counter to keep track of revision for rebuild. Could be made cleaner in the future. 
+        // Use a counter to keep track of revision for rebuild. Could be made cleaner in future. 
         _lastProfileRevision = _engine.ProfileRevision;
         RebuildWatchedControls(_engine.ExportProfile());
 

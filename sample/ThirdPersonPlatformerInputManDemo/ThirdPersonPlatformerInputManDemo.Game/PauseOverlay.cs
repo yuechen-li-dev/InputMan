@@ -17,10 +17,6 @@ public sealed class PauseOverlay : SyncScript
 {
     private const string JumpKb = "Jump.Kb";
     private const string LookLockMouse = "LookLock.Mouse";
-    private const string LookUnlockKb = "LookUnlock.Kb"; 
-    private const string PauseKb1 = "Pause.Kb.1";
-    private const string PauseKb2 = "Pause.Kb.2";
-    private const string PausePad0 = "Pause.Pad0";
 
     private IInputMan _inputMan = null!;
     private bool _paused;

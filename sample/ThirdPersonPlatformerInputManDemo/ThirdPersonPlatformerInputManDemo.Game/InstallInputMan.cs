@@ -9,11 +9,16 @@ using ThirdPersonPlatformerInputManDemoFs;
 namespace ThirdPersonPlatformerInputManDemo;
 
 public sealed class InstallInputMan : StartupScript
-{        
+{
+    private ActionMapId[] InitialMaps { get; set; } =
+        [
+            new ActionMapId("UI"),
+            new ActionMapId("Gameplay")
+        ];
 
     public override void Start()
     {
-        Func<InputProfile> buildDefault = DefaultPlatformerProfile.Create; 
+        Func<InputProfile> buildDefault = DefaultPlatformerProfile.Create;
         var userProfilePath = DemoProfilePaths.GetUserProfilePath();
         var defaultJsonPath = DemoProfilePaths.GetBundledDefaultProfilePath();
 
@@ -28,7 +33,7 @@ public sealed class InstallInputMan : StartupScript
             profile = LoadJson(defaultJsonPath);
         else if (File.Exists(userProfilePath))
             profile = LoadJson(userProfilePath);
-   
+
         profile = buildDefault(); //C#
 
         //profile = DefaultPlatformerProfileFs.profile; // F#
@@ -51,7 +56,8 @@ public sealed class InstallInputMan : StartupScript
             File.WriteAllText(userProfilePath, InputProfileJson.Save(profile));
         }
 
-        var sys = new StrideInputManSystem(Game.Services, profile) { Enabled = true };
+        var sys = new StrideInputManSystem(Game.Services, profile, InitialMaps)
+        { Enabled = true };
         Game.GameSystems.Add(sys);
     }
 }
