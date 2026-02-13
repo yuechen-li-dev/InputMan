@@ -299,7 +299,7 @@ public sealed class InputManEngine : IInputMan
             didTrigger = trig.Type switch
             {
                 TriggerType.Axis => MathF.Abs(AxisValue) > trig.Threshold, // deadzone makes sense
-                TriggerType.DeltaAxis => AxisValue != 1e7f,                       // ignore threshold by default, accounting for float noise.
+                TriggerType.DeltaAxis => MathF.Abs(AxisValue) > float.Epsilon,                       // ignore threshold by default, accounting for float noise.
                 _ => false
             };
 
