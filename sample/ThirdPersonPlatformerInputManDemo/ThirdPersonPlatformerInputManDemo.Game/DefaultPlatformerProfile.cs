@@ -32,6 +32,8 @@ public static class DefaultPlatformerProfile
     public static readonly Axis2Id LookStick = new("LookStick");
     public static readonly Axis2Id LookMouse = new("LookMouse");
 
+    public static readonly ActionId RebindJump = new("RebindJump");
+
     public static InputProfile Create()
     {
         var gameplay = CreateGameplayMap();
@@ -105,6 +107,8 @@ public static class DefaultPlatformerProfile
                 // Confirm/Cancel (keyboard)
                 Action(K(Keys.Enter), Confirm, ButtonEdge.Pressed, ConsumeMode.All),
                 Action(K(Keys.Back), Cancel, ButtonEdge.Pressed, ConsumeMode.All),
+
+                Action(K(Keys.J), RebindJump, ButtonEdge.Pressed,ConsumeMode.All, name: "RebindJump.Kb"),
             }
         };
 
