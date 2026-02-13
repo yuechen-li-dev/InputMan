@@ -1,18 +1,21 @@
 ﻿#nullable enable
 using InputMan.Core;
+using InputMan.StrideConn;
 using Stride.Engine;
 using Stride.Input;
 using System;
+using System.Collections.Generic;
 
 namespace ThirdPersonPlatformerInputManDemo;
 
 /// <summary>
 /// Controls pause state and coordinates between InputMan and UI.
-/// This is the "controller" in MVC pattern - no rendering, just logic and state.
+/// Updated to use new Core RebindingManager with StrideConn helpers.
 /// </summary>
 public sealed class PauseController : SyncScript
 {
     private IInputMan _inputMan = null!;
+    private IProfileStorage _storage = null!;
     private RebindingManager _rebindManager = null!;
     private bool _paused;
 
@@ -23,6 +26,12 @@ public sealed class PauseController : SyncScript
     // Actions
     private static readonly ActionId Pause = new("Pause");
     private static readonly ActionId RebindJump = new("RebindJump");
+
+    // Forbidden controls (reserved for system use)
+    private static readonly HashSet<ControlKey> ForbiddenControls = new()
+    {
+        new(DeviceKind.Keyboard, 0, (int)Keys.Escape) // Reserved for cancel/menu
+    };
 
     /// <summary>
     /// Is the game currently paused?
@@ -50,8 +59,13 @@ public sealed class PauseController : SyncScript
             ?? throw new InvalidOperationException(
                 "IInputMan not found. Add InstallInputMan to your scene.");
 
-        // Create rebinding manager
-        _rebindManager = new RebindingManager(_inputMan);
+        // Create storage (same config as InstallInputMan)
+        _storage = StrideProfileStorage.CreateDefault(
+            appName: "ThirdPersonPlatformerInputManDemo",
+            defaultProfileFactory: DefaultPlatformerProfile.Create);
+
+        // Create rebinding manager with storage
+        _rebindManager = new RebindingManager(_inputMan, _storage);
 
         // Start with both maps active
         _inputMan.SetMaps(UIMap, GameplayMap);
@@ -139,25 +153,57 @@ public sealed class PauseController : SyncScript
         // Notify listeners (UI will hide pause menu)
         OnResumed?.Invoke();
 
-        // Note: We don't hide/lock cursor here because PlayerInput
-        // will handle that based on LookLock/LookUnlock actions
-
         Log.Info("Game resumed");
     }
 
     /// <summary>
     /// Start rebinding the Jump action.
+    /// Uses StrideCandidateButtons to build the candidate list.
     /// </summary>
     public void StartRebindJump()
     {
-        _rebindManager.StartRebind(BindingNames.JumpKeyboard, GameplayMap);
+        // Build candidate buttons for keyboard + gamepad (no mouse)
+        var candidates = StrideCandidateButtons.KeyboardAndGamepad();
+
+        // Start rebinding with candidates and forbidden controls
+        _rebindManager.StartRebind(
+            bindingName: BindingNames.JumpKeyboard,
+            map: GameplayMap,
+            candidateButtons: candidates,
+            forbiddenControls: ForbiddenControls,
+            disallowConflicts: true);
     }
 
     /// <summary>
     /// Start rebinding any action by name.
+    /// Determines appropriate candidate buttons based on binding name.
     /// </summary>
     public void StartRebind(string bindingName, ActionMapId map)
     {
-        _rebindManager.StartRebind(bindingName, map);
+        // Determine candidates based on binding name
+        List<ControlKey> candidates;
+
+        if (bindingName.Contains("Mouse", StringComparison.OrdinalIgnoreCase))
+        {
+            // Mouse bindings: allow keyboard + mouse
+            candidates = StrideCandidateButtons.KeyboardAndMouse();
+        }
+        else if (bindingName.Contains("Pad", StringComparison.OrdinalIgnoreCase))
+        {
+            // Gamepad bindings: gamepad only (empty list, auto-detected)
+            candidates = new List<ControlKey>();
+        }
+        else
+        {
+            // Default: keyboard + gamepad
+            candidates = StrideCandidateButtons.KeyboardAndGamepad();
+        }
+
+        _rebindManager.StartRebind(
+            bindingName: bindingName,
+            map: map,
+            candidateButtons: candidates,
+            forbiddenControls: ForbiddenControls,
+            disallowConflicts: true);
     }
 }
