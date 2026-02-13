@@ -16,7 +16,7 @@ public static class RebindPresets
         new HashSet<DeviceKind> { DeviceKind.Keyboard, DeviceKind.Mouse };
 
     public static RebindRequest GameplayButton(ActionMapId map, string bindingNameOrSlot)
-        => new RebindRequest
+        => new()
         {
             Map = map,
             BindingNameOrSlot = bindingNameOrSlot,
@@ -29,7 +29,7 @@ public static class RebindPresets
         };
 
     public static RebindRequest UiButton(ActionMapId map, string bindingNameOrSlot)
-        => new RebindRequest
+        => new()
         {
             Map = map,
             BindingNameOrSlot = bindingNameOrSlot,
@@ -42,7 +42,7 @@ public static class RebindPresets
         };
 
     public static RebindRequest MouseAllowedButton(ActionMapId map, string bindingNameOrSlot)
-        => new RebindRequest
+        => new()
         {
             Map = map,
             BindingNameOrSlot = bindingNameOrSlot,
@@ -56,7 +56,7 @@ public static class RebindPresets
 
     // For "look lock" or "fire": include mouse + gamepad
     public static RebindRequest AnyButton(ActionMapId map, string bindingNameOrSlot)
-        => new RebindRequest
+        => new()
         {
             Map = map,
             BindingNameOrSlot = bindingNameOrSlot,

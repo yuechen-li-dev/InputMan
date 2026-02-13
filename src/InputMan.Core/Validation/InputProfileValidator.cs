@@ -8,8 +8,7 @@ public static class InputProfileValidator
 {
     public static void Validate(InputProfile profile)
     {
-        if (profile is null)
-            throw new ArgumentNullException(nameof(profile));
+        ArgumentNullException.ThrowIfNull(profile);
 
         // 1) Maps
         if (profile.Maps is null)
@@ -61,7 +60,7 @@ public static class InputProfileValidator
                     $"Axis2 key \"{axis2Name}\" does not match axis2Def.Id \"{axis2Def.Id.Name}\".");
 
             // Optional sanity: X/Y axis ids must not be default
-            if (axis2Def.X.Equals(default(AxisId)) || axis2Def.Y.Equals(default))
+            if (axis2Def.X.Equals(default) || axis2Def.Y.Equals(default))
                 throw new InvalidOperationException($"Axis2 \"{axis2Name}\" has default X or Y AxisId.");
         }
     }
@@ -72,15 +71,13 @@ public static class InputProfileValidator
 
         for (int i = 0; i < map.Bindings.Count; i++)
         {
-            var b = map.Bindings[i];
-            if (b is null)
-                throw new InvalidOperationException($"Map \"{map.Id.Name}\" has a null binding at index {i}.");
-
+            var b = map.Bindings[i] ?? throw new InvalidOperationException($"Map \"{map.Id.Name}\" has a null binding at index {i}.");
             if (string.IsNullOrWhiteSpace(b.Name))
                 throw new InvalidOperationException($"Map \"{map.Id.Name}\" binding[{i}] has empty Name.");
 
-            //if (!seenNames.Add(b.Name))
-                //throw new InvalidOperationException($"Map \"{map.Id.Name}\" has duplicate binding name \"{b.Name}\".");
+            // This rule can be buggy during binding. Turning it off for now.
+            if (!seenNames.Add(b.Name))
+                throw new InvalidOperationException($"Map \"{map.Id.Name}\" has duplicate binding name \"{b.Name}\".");
 
             if (b.Trigger is null)
                 throw new InvalidOperationException($"Binding \"{b.Name}\" has Trigger=null.");

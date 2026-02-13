@@ -62,8 +62,8 @@ public static class DefaultPlatformerProfile
             Id = new ActionMapId("Gameplay"),
             Priority = 10,
             CanConsume = false,
-            Bindings = new List<Binding>
-            {
+            Bindings =
+            [
                 // Keyboard movement (WASD)
                 ButtonAxis(K(Keys.A), MoveX, -1, name: BindingNames.MoveLeftKeyboard),
                 ButtonAxis(K(Keys.D), MoveX, +1, name: BindingNames.MoveRightKeyboard),
@@ -80,7 +80,7 @@ public static class DefaultPlatformerProfile
                 // Mouse lock/unlock
                 Action(M(MouseButton.Left), LookLock, ButtonEdge.Pressed, name: BindingNames.LookLockMouse),
                 Action(K(Keys.Escape), LookUnlock, ButtonEdge.Pressed, name: BindingNames.LookUnlockKeyboard),
-            }
+            ]
         };
 
         // Add gamepad bindings for up to 4 controllers
@@ -96,8 +96,8 @@ public static class DefaultPlatformerProfile
             Id = new ActionMapId("UI"),
             Priority = 100,
             CanConsume = true,
-            Bindings = new List<Binding>
-            {
+            Bindings =
+            [
                 // Pause (keyboard)
                 Action(K(Keys.Escape), Pause, ButtonEdge.Pressed,
                     ConsumeMode.All, BindingNames.PauseKeyboard1),
@@ -109,7 +109,7 @@ public static class DefaultPlatformerProfile
                 Action(K(Keys.Back), Cancel, ButtonEdge.Pressed, ConsumeMode.All),
 
                 Action(K(Keys.J), RebindJump, ButtonEdge.Pressed,ConsumeMode.All, name: "RebindJump.Kb"),
-            }
+            ]
         };
 
         // Add UI gamepad bindings
