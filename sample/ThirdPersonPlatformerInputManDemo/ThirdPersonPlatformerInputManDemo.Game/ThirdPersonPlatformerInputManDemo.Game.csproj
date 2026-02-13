@@ -5,7 +5,7 @@
     <RootNamespace>ThirdPersonPlatformerInputManDemo</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="18.0.2" />
+    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="18.3.3" />
     <PackageReference Include="Stride.Core" Version="4.3.0.2507" PrivateAssets="contentfiles;analyzers" />
     <PackageReference Include="Stride.Core.Assets.CompilerApp" Version="4.3.0.2507" PrivateAssets="contentfiles;analyzers" IncludeAssets="build" />
     <PackageReference Include="Stride.Engine" Version="4.3.0.2507" PrivateAssets="contentfiles;analyzers" />
