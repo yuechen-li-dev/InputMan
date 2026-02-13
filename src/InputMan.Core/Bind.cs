@@ -8,6 +8,9 @@ namespace InputMan.Core;
 /// </summary>
 public static class Bind
 {
+    /// <summary>
+    /// Basic action mapping. Binary button press.
+    /// </summary>
     public static Binding Action(
         ControlKey key,
         ActionId action,
