@@ -1,10 +1,8 @@
 ﻿#nullable enable
 using InputMan.Core;
-using InputMan.Core.Serialization;
 using Stride.Input;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace ThirdPersonPlatformerInputManDemo;
@@ -13,9 +11,9 @@ namespace ThirdPersonPlatformerInputManDemo;
 /// Manages all rebinding logic. Pure business logic - no UI, no rendering.
 /// Can be reused in settings menus, pause menus, or anywhere else.
 /// </summary>
-public sealed class RebindingManager
+public sealed class RebindingManager(IInputMan inputMan)
 {
-    private readonly IInputMan _inputMan;
+    private readonly IInputMan _inputMan = inputMan ?? throw new ArgumentNullException(nameof(inputMan));
     private IRebindSession? _session;
     private string _statusMessage = "";
 
@@ -31,11 +29,6 @@ public sealed class RebindingManager
 
     public bool IsRebinding => _session != null;
     public string StatusMessage => _statusMessage;
-
-    public RebindingManager(IInputMan inputMan)
-    {
-        _inputMan = inputMan ?? throw new ArgumentNullException(nameof(inputMan));
-    }
 
     /// <summary>
     /// Start rebinding a specific binding by name.
@@ -77,7 +70,7 @@ public sealed class RebindingManager
     /// <summary>
     /// Creates a rebind request with appropriate settings for the binding.
     /// </summary>
-    private RebindRequest CreateRebindRequest(string bindingName, ActionMapId map)
+    private static RebindRequest CreateRebindRequest(string bindingName, ActionMapId map)
     {
         // Determine which preset to use based on binding name
         RebindRequest request;

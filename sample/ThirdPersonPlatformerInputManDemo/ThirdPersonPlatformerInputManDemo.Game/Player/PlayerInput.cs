@@ -32,7 +32,6 @@ namespace ThirdPersonPlatformerInputManDemo.Player
         private static readonly ActionMapId UIMap = new("UI");
 
         private static readonly ActionId PauseAction = new("Pause");
-        private bool _paused;
 
         private IInputMan _inputMan = null!;
 
