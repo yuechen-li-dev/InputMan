@@ -10,31 +10,23 @@ namespace InputMan.StrideConn;
 /// Handles profile loading/saving with configurable paths and serialization.
 /// Default uses JSON serialization, but can be extended for TOML, XML, etc.
 /// </summary>
-public class StrideProfileStorage : IProfileStorage
+/// <remarks>
+/// Create a new StrideProfileStorage with custom paths and serialization.
+/// </remarks>
+/// <param name="userProfilePath">Path to user's writable profile (for rebinds).</param>
+/// <param name="defaultProfileFactory">Factory function to create default profile when none exists.</param>
+/// <param name="serializer">Optional serializer (defaults to JSON). Can use TOML, XML, etc.</param>
+/// <param name="bundledProfilePath">Optional path to bundled default profile (shipped with game).</param>
+public class StrideProfileStorage(
+    string userProfilePath,
+    Func<InputProfile> defaultProfileFactory,
+    IProfileSerializer? serializer = null,
+    string? bundledProfilePath = null) : IProfileStorage
 {
-    private readonly string _userProfilePath;
-    private readonly string? _bundledProfilePath;
-    private readonly Func<InputProfile> _defaultProfileFactory;
-    private readonly IProfileSerializer _serializer;
-
-    /// <summary>
-    /// Create a new StrideProfileStorage with custom paths and serialization.
-    /// </summary>
-    /// <param name="userProfilePath">Path to user's writable profile (for rebinds).</param>
-    /// <param name="defaultProfileFactory">Factory function to create default profile when none exists.</param>
-    /// <param name="serializer">Optional serializer (defaults to JSON). Can use TOML, XML, etc.</param>
-    /// <param name="bundledProfilePath">Optional path to bundled default profile (shipped with game).</param>
-    public StrideProfileStorage(
-        string userProfilePath,
-        Func<InputProfile> defaultProfileFactory,
-        IProfileSerializer? serializer = null,
-        string? bundledProfilePath = null)
-    {
-        _userProfilePath = userProfilePath ?? throw new ArgumentNullException(nameof(userProfilePath));
-        _defaultProfileFactory = defaultProfileFactory ?? throw new ArgumentNullException(nameof(defaultProfileFactory));
-        _serializer = serializer ?? new JsonProfileSerializer();
-        _bundledProfilePath = bundledProfilePath;
-    }
+    private readonly string _userProfilePath = userProfilePath ?? throw new ArgumentNullException(nameof(userProfilePath));
+    private readonly string? _bundledProfilePath = bundledProfilePath;
+    private readonly Func<InputProfile> _defaultProfileFactory = defaultProfileFactory ?? throw new ArgumentNullException(nameof(defaultProfileFactory));
+    private readonly IProfileSerializer _serializer = serializer ?? new JsonProfileSerializer();
 
     /// <summary>
     /// Convenience constructor using standard paths for a Stride game.
@@ -105,8 +97,7 @@ public class StrideProfileStorage : IProfileStorage
 
     public void SaveProfile(InputProfile profile)
     {
-        if (profile == null)
-            throw new ArgumentNullException(nameof(profile));
+        ArgumentNullException.ThrowIfNull(profile);
 
         try
         {

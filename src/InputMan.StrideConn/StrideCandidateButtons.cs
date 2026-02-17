@@ -18,10 +18,9 @@ public static class StrideCandidateButtons
     /// </summary>
     public static List<ControlKey> AllKeyboardKeys()
     {
-        return Enum.GetValues<Keys>()
+        return [.. Enum.GetValues<Keys>()
             .Where(k => k != Keys.None)
-            .Select(k => new ControlKey(DeviceKind.Keyboard, 0, (int)k))
-            .ToList();
+            .Select(k => new ControlKey(DeviceKind.Keyboard, 0, (int)k))];
     }
 
     /// <summary>
@@ -29,14 +28,14 @@ public static class StrideCandidateButtons
     /// </summary>
     public static List<ControlKey> AllMouseButtons()
     {
-        return new List<ControlKey>
-        {
+        return
+        [
             new(DeviceKind.Mouse, 0, (int)MouseButton.Left),
             new(DeviceKind.Mouse, 0, (int)MouseButton.Right),
             new(DeviceKind.Mouse, 0, (int)MouseButton.Middle),
             new(DeviceKind.Mouse, 0, (int)MouseButton.Extended1),
             new(DeviceKind.Mouse, 0, (int)MouseButton.Extended2),
-        };
+        ];
     }
 
     /// <summary>

@@ -30,10 +30,10 @@ public sealed class PauseController : SyncScript
     private static readonly ActionId CancelRebind = new("CancelRebind");
 
     // Forbidden controls (reserved for system use)
-    private static readonly HashSet<ControlKey> ForbiddenControls = new()
-    {
+    private static readonly HashSet<ControlKey> ForbiddenControls =
+    [
         new(DeviceKind.Keyboard, 0, (int)Keys.Escape) // Reserved for cancel/menu
-    };
+    ];
 
     /// <summary>
     /// Is the game currently paused?
@@ -192,7 +192,7 @@ public sealed class PauseController : SyncScript
         else if (bindingName.Contains("Pad", StringComparison.OrdinalIgnoreCase))
         {
             // Gamepad bindings: gamepad only (empty list, auto-detected)
-            candidates = new List<ControlKey>();
+            candidates = [];
         }
         else
         {

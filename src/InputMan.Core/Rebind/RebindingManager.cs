@@ -8,10 +8,15 @@ namespace InputMan.Core.Rebind;
 /// Pure business logic - no UI, no rendering, no engine-specific code.
 /// Can be reused in any game engine with InputMan.
 /// </summary>
-public sealed class RebindingManager
+/// <remarks>
+/// Create a new rebinding manager.
+/// </remarks>
+/// <param name="inputMan">The InputMan instance to rebind.</param>
+/// <param name="storage">Profile storage for saving after successful rebinds.</param>
+public sealed class RebindingManager(IInputMan inputMan, IProfileStorage storage)
 {
-    private readonly IInputMan _inputMan;
-    private readonly IProfileStorage _storage;
+    private readonly IInputMan _inputMan = inputMan ?? throw new ArgumentNullException(nameof(inputMan));
+    private readonly IProfileStorage _storage = storage ?? throw new ArgumentNullException(nameof(storage));
     private IRebindSession? _session;
     private string _statusMessage = "";
 
@@ -27,17 +32,6 @@ public sealed class RebindingManager
 
     public bool IsRebinding => _session != null;
     public string StatusMessage => _statusMessage;
-
-    /// <summary>
-    /// Create a new rebinding manager.
-    /// </summary>
-    /// <param name="inputMan">The InputMan instance to rebind.</param>
-    /// <param name="storage">Profile storage for saving after successful rebinds.</param>
-    public RebindingManager(IInputMan inputMan, IProfileStorage storage)
-    {
-        _inputMan = inputMan ?? throw new ArgumentNullException(nameof(inputMan));
-        _storage = storage ?? throw new ArgumentNullException(nameof(storage));
-    }
 
     /// <summary>
     /// Start rebinding a specific binding by name.
@@ -91,8 +85,7 @@ public sealed class RebindingManager
     /// </summary>
     public void StartRebind(RebindRequest request)
     {
-        if (request == null)
-            throw new ArgumentNullException(nameof(request));
+        ArgumentNullException.ThrowIfNull(request);
 
         // Cancel any existing session
         CancelRebind();
