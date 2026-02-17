@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace InputMan.Core;
+namespace InputMan.Core.Rebind;
 
 public static class RebindRequestExtensions
 {

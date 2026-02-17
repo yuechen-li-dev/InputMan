@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using InputMan.Core;
+using InputMan.Core.Rebind;
 using InputMan.StrideConn;
 using Stride.Engine;
 using Stride.Input;

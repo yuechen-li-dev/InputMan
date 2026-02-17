@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.Marshalling;
 
-namespace InputMan.Core;
+namespace InputMan.Core.Rebind;
 
 public sealed class RebindRequest
 {

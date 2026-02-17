@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace InputMan.Core;
+namespace InputMan.Core.Rebind;
 
 /// <summary>
 /// Manages all rebinding logic in an engine-agnostic way.

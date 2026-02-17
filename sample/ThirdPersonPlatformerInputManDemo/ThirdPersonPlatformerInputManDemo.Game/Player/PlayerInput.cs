@@ -1,4 +1,3 @@
-#nullable enable
 using InputMan.Core;
 using Stride.Engine;
 using Stride.Engine.Events;
@@ -83,13 +82,13 @@ public class PlayerInput : SyncScript
 
     public override void Start()
     {
-/*        // Acquire InputMan service (installed by InstallInputMan startup script)
+        // Acquire InputMan service (installed by InstallInputMan startup script)
         _inputMan = Game.Services.GetService<IInputMan>();
 
         if (_inputMan == null)
         {
             Log.Warning("PlayerInput: IInputMan not found. Input will not work until InstallInputMan runs.");
-        }*/
+        }
     }
 
     public override void Update()
@@ -115,9 +114,9 @@ public class PlayerInput : SyncScript
     /// </summary>
     /// <remarks>
     /// InputMan already handles:
-    /// - Deadzone (via DeadzoneProcessor in profile)
+    /// - Deadzone (via DeadzoneProcessor in profile for gamepad sticks)
     /// - Input aggregation (WASD + stick combined)
-    /// - Analog scaling (stick magnitude)
+    /// - Analog scaling (stick magnitude preserved after deadzone)
     /// We just need to:
     /// - Convert 2D input to 3D world space
     /// - Make it camera-relative
@@ -127,9 +126,8 @@ public class PlayerInput : SyncScript
         // Get movement input (already deadzone-processed and aggregated)
         var moveInput = _inputMan!.GetAxis2(MoveAxis);
 
-        // Check if there's any input
-        var inputMagnitude = moveInput.Length();
-        if (inputMagnitude < 0.01f)
+        // Check if there's any input (small epsilon for floating point)
+        if (moveInput.LengthSquared() < 0.0001f)
         {
             MoveDirectionEventKey.Broadcast(Vector3.Zero);
             return;
@@ -140,13 +138,14 @@ public class PlayerInput : SyncScript
             ? Utils.LogicDirectionToWorldDirection(moveInput, Camera, Vector3.UnitY)
             : new Vector3(moveInput.X, 0, moveInput.Y);
 
-        // Normalize (preserves direction, removes magnitude)
+        // Normalize direction (removes magnitude)
         if (worldDirection.LengthSquared() > 0f)
             worldDirection.Normalize();
 
-        // Scale by input magnitude (so analog sticks can control speed)
-        // Note: InputMan clamps analog values to [0,1], so this is safe
-        worldDirection *= Math.Min(inputMagnitude, 1f);
+        // Restore magnitude from input (allows analog stick control of speed)
+        // InputMan clamps analog axes to [-1, 1] after deadzone processing
+        var inputMagnitude = Math.Min(moveInput.Length(), 1f);
+        worldDirection *= inputMagnitude;
 
         MoveDirectionEventKey.Broadcast(worldDirection);
     }
@@ -157,24 +156,24 @@ public class PlayerInput : SyncScript
     /// <remarks>
     /// Stick: Constant rotation speed while held (scaled by delta time)
     /// Mouse: Delta-based (already frame-rate independent)
+    /// Both inputs have deadzone applied via processors in the profile.
     /// </remarks>
     private void ProcessCameraRotation(float deltaTime)
     {
-        // Get stick input (right stick)
+        // Get stick input (right stick) - deadzone already applied by processor
         var stickInput = _inputMan!.GetAxis2(LookStickAxis);
         var stick = new Vector2(stickInput.X, stickInput.Y);
 
-        // Apply deadzone to stick (InputMan doesn't apply deadzone to look stick by default)
-        const float stickDeadzone = 0.15f;
-        if (stick.Length() < stickDeadzone)
-        {
-            stick = Vector2.Zero;
-        }
-        else
+        // Check for meaningful input (small epsilon for floating point)
+        if (stick.LengthSquared() > 0.0001f)
         {
             // Normalize for constant rotation speed, then scale by delta time
             stick.Normalize();
             stick *= deltaTime;
+        }
+        else
+        {
+            stick = Vector2.Zero;
         }
 
         // Handle mouse lock/unlock
