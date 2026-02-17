@@ -26,6 +26,7 @@ public sealed class PauseController : SyncScript
     // Actions
     private static readonly ActionId Pause = new("Pause");
     private static readonly ActionId RebindJump = new("RebindJump");
+    private static readonly ActionId CancelRebind = new("CancelRebind");
 
     // Forbidden controls (reserved for system use)
     private static readonly HashSet<ControlKey> ForbiddenControls = new()
@@ -93,7 +94,7 @@ public sealed class PauseController : SyncScript
 
         // Cancel rebinding with Escape
         // TODO: Make this use InputMan too by adding a "Cancel" action
-        if (_rebindManager.IsRebinding && Input.IsKeyPressed(Keys.Escape))
+        if (_rebindManager.IsRebinding && _inputMan.WasPressed(CancelRebind))
         {
             _rebindManager.CancelRebind();
         }

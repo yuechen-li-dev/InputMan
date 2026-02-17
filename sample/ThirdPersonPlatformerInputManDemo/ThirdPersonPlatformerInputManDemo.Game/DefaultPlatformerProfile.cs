@@ -19,7 +19,7 @@ public static class DefaultPlatformerProfile
     public static readonly ActionId LookUnlock = new("LookUnlock");
     public static readonly ActionId Pause = new("Pause");
     public static readonly ActionId Confirm = new("Confirm");
-    public static readonly ActionId Cancel = new("Cancel");
+    public static readonly ActionId CancelRebind = new("CancelRebind");
 
     public static readonly AxisId MoveX = new("MoveX");
     public static readonly AxisId MoveY = new("MoveY");
@@ -98,17 +98,21 @@ public static class DefaultPlatformerProfile
             CanConsume = true,
             Bindings =
             [
-                // Pause (keyboard)
+                // Pause (keyboard) - Escape triggers Pause
                 Action(K(Keys.Escape), Pause, ButtonEdge.Pressed,
                     ConsumeMode.All, BindingNames.PauseKeyboard1),
                 Action(K(Keys.M), Pause, ButtonEdge.Pressed,
                     ConsumeMode.All, BindingNames.PauseKeyboard2),
 
-                // Confirm/Cancel (keyboard)
-                Action(K(Keys.Enter), Confirm, ButtonEdge.Pressed, ConsumeMode.All),
-                Action(K(Keys.Back), Cancel, ButtonEdge.Pressed, ConsumeMode.All),
+                // Cancel (keyboard) - Escape ALSO triggers Cancel (for rebinding)
+                Action(K(Keys.Escape), CancelRebind, ButtonEdge.Pressed,
+                    ConsumeMode.All, name: "Cancel.Kb.Escape"),
 
-                Action(K(Keys.J), RebindJump, ButtonEdge.Pressed,ConsumeMode.All, name: "RebindJump.Kb"),
+                // Confirm (keyboard)
+                Action(K(Keys.Enter), Confirm, ButtonEdge.Pressed, ConsumeMode.All),
+
+                // Rebind Jump hotkey
+                Action(K(Keys.J), RebindJump, ButtonEdge.Pressed, ConsumeMode.All, name: "RebindJump.Kb"),
             ]
         };
 
@@ -166,9 +170,10 @@ public static class DefaultPlatformerProfile
                 ButtonEdge.Pressed,
                 ConsumeMode.All));
 
+            // Gamepad B = Cancel (consistent with Escape on keyboard)
             map.Bindings.Add(Action(
                 PadBtn(i, GamePadButton.B),
-                Cancel,
+                CancelRebind,
                 ButtonEdge.Pressed,
                 ConsumeMode.All));
         }
