@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Xunit;
 using InputMan.Core;
 
-namespace InputMan.Tests;
+namespace InputMan.Core.Tests.Processors;
 
 /// <summary>
 /// Tests for input processors (DeadzoneProcessor, InvertProcessor, ScaleProcessor).

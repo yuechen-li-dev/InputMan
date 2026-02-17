@@ -299,7 +299,7 @@ internal sealed class RebindSession(
 
     /// <summary>
     /// Check if control conflicts with another binding IN THE SAME MAP.
-    /// FIX: Now queries the engine's live profile instead of using stale binding list.
+    /// Now queries the engine's live profile instead of using stale binding list.
     /// </summary>
     private bool IsConflictInSameMap(ControlKey key)
     {
@@ -328,7 +328,7 @@ internal sealed class RebindSession(
     }
 
     /// <summary>
-    /// NEW: Check if control conflicts with ANY binding across ALL maps in the profile.
+    /// Check if control conflicts with ANY binding across ALL maps in the profile.
     /// </summary>
     private bool IsConflictAcrossAllMaps(ControlKey key)
     {
