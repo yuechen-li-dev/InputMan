@@ -94,7 +94,6 @@ public sealed class PauseController : SyncScript
         }
 
         // Cancel rebinding with Escape
-        // TODO: Make this use InputMan too by adding a "Cancel" action
         if (_rebindManager.IsRebinding && _inputMan.WasPressed(CancelRebind))
         {
             _rebindManager.CancelRebind();

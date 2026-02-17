@@ -1,3 +1,4 @@
+#nullable enable
 using InputMan.Core;
 using Stride.Engine;
 using Stride.Engine.Events;
@@ -87,7 +88,7 @@ public class PlayerInput : SyncScript
 
         if (_inputMan == null)
         {
-            Log.Warning("PlayerInput: IInputMan not found. Input will not work until InstallInputMan runs.");
+            Log.Warning("PlayerInput: IInputMan not found. Waiting for InstallInputMan");
         }
     }
 

@@ -9,7 +9,7 @@ namespace InputMan.Core;
 public static class Bind
 {
     /// <summary>
-    /// Basic action mapping.
+    /// Basic digital action mapping.
     /// </summary>
     public static Binding Action(
         ControlKey key,
@@ -38,7 +38,8 @@ public static class Bind
         AxisId axis,
         float scale,
         ConsumeMode consume = ConsumeMode.None,
-        string? name = null)
+        string? name = null,
+        params IProcessor[] processors)
         => new()
         {
             Name = name ?? $"{axis.Name}:{key}:{scale}",
@@ -50,6 +51,7 @@ public static class Bind
             },
             Output = new AxisOutput(axis, scale),
             Consume = consume,
+            Processors = processors.Length > 0 ? [.. processors] : [],
         };
 
     /// <summary>
@@ -61,7 +63,8 @@ public static class Bind
         float scale = 1f,
         float threshold = 0f,
         ConsumeMode consume = ConsumeMode.None,
-        string? name = null)
+        string? name = null,
+        params IProcessor[] processors)
         => new()
         {
             Name = name ?? $"{axis.Name}:{key}",
@@ -73,6 +76,7 @@ public static class Bind
             },
             Output = new AxisOutput(axis, scale),
             Consume = consume,
+            Processors = processors.Length > 0 ? [.. processors] : [],
         };
 
     /// <summary>
@@ -83,7 +87,8 @@ public static class Bind
         AxisId axis,
         float scale = 1f,
         ConsumeMode consume = ConsumeMode.None,
-        string? name = null)
+        string? name = null,
+        params IProcessor[] processors)
         => new()
         {
             Name = name ?? $"{axis.Name}:{key}:delta",
@@ -95,6 +100,7 @@ public static class Bind
             },
             Output = new AxisOutput(axis, scale),
             Consume = consume,
+            Processors = processors.Length > 0 ? [.. processors] : [],
         };
 
     //Shortened overload for FSharp

@@ -135,61 +135,15 @@ public static class DefaultPlatformerProfile
         for (byte i = 0; i < maxPads; i++)
         {
             // Movement (left stick) with deadzone
-            map.Bindings.Add(new Binding
-            {
-                Name = $"MoveX.Pad{i}",
-                Trigger = new BindingTrigger
-                {
-                    Control = PadLeftX(i),
-                    Type = TriggerType.Axis
-                },
-                Output = new AxisOutput(MoveX, Scale: 1f),
-                Processors = [deadzone]
-            });
-
-            map.Bindings.Add(new Binding
-            {
-                Name = $"MoveY.Pad{i}",
-                Trigger = new BindingTrigger
-                {
-                    Control = PadLeftY(i),
-                    Type = TriggerType.Axis
-                },
-                Output = new AxisOutput(MoveY, Scale: 1f),
-                Processors = [deadzone]
-            });
+            map.Bindings.Add(Axis(PadLeftX(i), MoveX, scale: 1f, name: $"MoveX.Pad{i}", processors: deadzone));
+            map.Bindings.Add(Axis(PadLeftY(i), MoveY, scale: 1f, name: $"MoveY.Pad{i}", processors: deadzone));
 
             // Camera (right stick) with deadzone
-            map.Bindings.Add(new Binding
-            {
-                Name = $"LookStickX.Pad{i}",
-                Trigger = new BindingTrigger
-                {
-                    Control = PadRightX(i),
-                    Type = TriggerType.Axis
-                },
-                Output = new AxisOutput(LookStickX, Scale: 1f),
-                Processors = [deadzone]
-            });
-
-            map.Bindings.Add(new Binding
-            {
-                Name = $"LookStickY.Pad{i}",
-                Trigger = new BindingTrigger
-                {
-                    Control = PadRightY(i),
-                    Type = TriggerType.Axis
-                },
-                Output = new AxisOutput(LookStickY, Scale: 1f),
-                Processors = [deadzone]
-            });
+            map.Bindings.Add(Axis(PadRightX(i), LookStickX, scale: 1f, name: $"LookStickX.Pad{i}", processors: deadzone));
+            map.Bindings.Add(Axis(PadRightY(i), LookStickY, scale: 1f, name: $"LookStickY.Pad{i}", processors: deadzone));
 
             // Jump (A button)
-            map.Bindings.Add(Action(
-                PadBtn(i, GamePadButton.A),
-                Jump,
-                ButtonEdge.Pressed,
-                name: $"Jump.Pad{i}"));
+            map.Bindings.Add(Action(PadBtn(i, GamePadButton.A), Jump, ButtonEdge.Pressed, name: $"Jump.Pad{i}"));
         }
     }
 

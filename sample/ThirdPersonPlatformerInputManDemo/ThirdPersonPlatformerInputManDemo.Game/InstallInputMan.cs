@@ -32,6 +32,6 @@ public sealed class InstallInputMan : StartupScript
 
         Game.GameSystems.Add(inputSystem);
 
-        Log.Info("✅ InputMan installed successfully");
+        Log.Info("InputMan installed successfully");
     }
 }
