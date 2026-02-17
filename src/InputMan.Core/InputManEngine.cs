@@ -307,8 +307,15 @@ public sealed class InputManEngine : IInputMan
             if (!didTrigger || binding.Output is not AxisOutput AxisOut)
                 return false;
 
+            // Apply processors to the axis value
+            var processedValue = AxisValue;
+            foreach (var processor in binding.Processors)
+            {
+                processedValue = processor.Process(processedValue);
+            }
+
             // Accumulate analog value scaled by binding scale
-            _axes[AxisOut.Axis] = _axes.GetValueOrDefault(AxisOut.Axis) + (AxisValue * AxisOut.Scale);
+            _axes[AxisOut.Axis] = _axes.GetValueOrDefault(AxisOut.Axis) + (processedValue * AxisOut.Scale);
 
             axisEvent = new AxisEvent(AxisOut.Axis, _axes[AxisOut.Axis], FrameIndex, _timeSeconds);
             return true;
