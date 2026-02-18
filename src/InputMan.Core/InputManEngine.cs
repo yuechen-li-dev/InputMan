@@ -329,28 +329,31 @@ public sealed class InputManEngine : IInputMan
 
         else if (trig.Type is TriggerType.Button)
         {
-            // Raw button state
+            // Raw button state (current and previous)
             bool rawDown = snapshot.TryGetButton(control, out var cur) && cur;
             bool prevDown = _prevButtons.TryGetValue(control, out var prev) && prev;
 
-            // Modifiers (chord) - must all be held
+            // Modifiers (chord) - check both current and previous frame
             bool modsDown = true;
+            bool prevModsDown = true;
             var mods = trig.Modifiers;
             if (mods is { Length: > 0 })
             {
                 for (int i = 0; i < mods.Length; i++)
                 {
+                    // Current frame modifier state
                     if (!snapshot.TryGetButton(mods[i], out var md) || !md)
-                    {
                         modsDown = false;
-                        break;
-                    }
+
+                    // Previous frame modifier state
+                    if (!_prevButtons.TryGetValue(mods[i], out var prevMod) || !prevMod)
+                        prevModsDown = false;
                 }
             }
 
-            // Effective down for this binding (raw button AND all modifiers held)
+            // Effective state (control AND modifiers)
             bool curDown = rawDown && modsDown;
-            bool prevEffective = prevDown && modsDown; // Previous frame's effective state
+            bool prevEffective = prevDown && prevModsDown;
 
             // Edge detection based on effective state transitions
             bool isPressed = !prevEffective && curDown;

@@ -208,5 +208,88 @@ namespace InputMan.Core.Tests.Engine
             Assert.Equal(0f, engine.GetAxis(moveY));
         }
 
+        [Fact]
+        public void Chord_ActionPressed_OnlyFiresOnceWhenModifierAndPrimaryBothPressed()
+        {
+            // This is THE critical test - ensures no double-firing
+            var sprint = new ActionId("Sprint");
+            var shift = new ControlKey(DeviceKind.Keyboard, 0, KeyLeftShift);
+            var w = new ControlKey(DeviceKind.Keyboard, 0, KeyW);
+
+            var profile = MakeChordProfile(sprint, w, shift);
+
+            // Change binding edge to Pressed
+            var map = profile.Maps["Gameplay"];
+            var old = map.Bindings[0];
+            map.Bindings[0] = new Binding
+            {
+                Name = old.Name,
+                Trigger = new BindingTrigger
+                {
+                    Control = old.Trigger.Control,
+                    Type = old.Trigger.Type,
+                    Modifiers = old.Trigger.Modifiers,
+                    ButtonEdge = ButtonEdge.Pressed,
+                    Threshold = old.Trigger.Threshold,
+                },
+                Output = old.Output,
+                Consume = old.Consume,
+            };
+
+            var engine = new InputManEngine(profile);
+            engine.SetMaps(new ActionMapId("Gameplay"));
+
+            int pressedCount = 0;
+            engine.OnAction += e =>
+            {
+                if (e.Phase == ActionPhase.Pressed && e.Action.Equals(sprint))
+                    pressedCount++;
+            };
+
+            // Frame 1: Nothing pressed
+            engine.Tick(new InputSnapshot(
+                buttons: new Dictionary<ControlKey, bool>(),
+                axes: new Dictionary<ControlKey, float>()
+            ), 0.016f, 0f);
+
+            Assert.Equal(0, pressedCount);
+            Assert.False(engine.WasPressed(sprint));
+
+            // Frame 2: Press W only (no modifier) => should NOT fire
+            engine.Tick(new InputSnapshot(
+                buttons: new Dictionary<ControlKey, bool> { [w] = true },
+                axes: new Dictionary<ControlKey, float>()
+            ), 0.016f, 0.016f);
+
+            Assert.Equal(0, pressedCount);
+            Assert.False(engine.WasPressed(sprint));
+
+            // Frame 3: Add Shift (chord complete) => should fire ONCE
+            engine.Tick(new InputSnapshot(
+                buttons: new Dictionary<ControlKey, bool> { [w] = true, [shift] = true },
+                axes: new Dictionary<ControlKey, float>()
+            ), 0.016f, 0.032f);
+
+            Assert.Equal(1, pressedCount); // ← THE CRITICAL ASSERTION
+            Assert.True(engine.WasPressed(sprint));
+
+            // Frame 4: Keep holding both => should NOT fire again
+            engine.Tick(new InputSnapshot(
+                buttons: new Dictionary<ControlKey, bool> { [w] = true, [shift] = true },
+                axes: new Dictionary<ControlKey, float>()
+            ), 0.016f, 0.048f);
+
+            Assert.Equal(1, pressedCount); // Still only 1
+            Assert.False(engine.WasPressed(sprint)); // Not pressed THIS frame
+
+            // Frame 5: Release W => should NOT fire (it's a Pressed edge, not Released)
+            engine.Tick(new InputSnapshot(
+                buttons: new Dictionary<ControlKey, bool> { [shift] = true },
+                axes: new Dictionary<ControlKey, float>()
+            ), 0.016f, 0.064f);
+
+            Assert.Equal(1, pressedCount); // Still only 1
+            Assert.False(engine.WasPressed(sprint));
+        }
     }
 }

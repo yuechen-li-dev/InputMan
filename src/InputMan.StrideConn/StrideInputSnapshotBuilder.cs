@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using InputMan.Core;
-using Stride.Core.Mathematics;
+﻿using InputMan.Core;
 using Stride.Input;
 
 namespace InputMan.StrideConn;
