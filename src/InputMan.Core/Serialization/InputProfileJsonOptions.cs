@@ -39,6 +39,9 @@ public static class InputProfileJsonOptions
         options.Converters.Add(new ControlKeyJsonConverter());
         options.Converters.Add(new BindingOutputJsonConverter());
 
+        // Processor polymorphism support
+        options.Converters.Add(new ProcessorJsonConverter());
+
         return options;
     }
 }

@@ -57,7 +57,7 @@ public class StrideProfileStorage(
 
     public InputProfile LoadProfile()
     {
-        // Priority 1: User profile (contains rebinds)
+/*        // Priority 1: User profile (contains rebinds)
         if (File.Exists(_userProfilePath))
         {
             try
@@ -87,7 +87,7 @@ public class StrideProfileStorage(
                     $"Failed to load bundled profile from {_bundledProfilePath}: {ex.Message}");
                 // Fall through to default
             }
-        }
+        }*/
 
         // Priority 3: Code-defined default
         return _defaultProfileFactory();

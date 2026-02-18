@@ -329,10 +329,11 @@ public sealed class InputManEngine : IInputMan
 
         else if (trig.Type is TriggerType.Button)
         {
-            // Raw button
+            // Raw button state
             bool rawDown = snapshot.TryGetButton(control, out var cur) && cur;
+            bool prevDown = _prevButtons.TryGetValue(control, out var prev) && prev;
 
-            // Modifiers (chord)
+            // Modifiers (chord) - must all be held
             bool modsDown = true;
             var mods = trig.Modifiers;
             if (mods is { Length: > 0 })
@@ -347,17 +348,18 @@ public sealed class InputManEngine : IInputMan
                 }
             }
 
-            // Effective down for this binding
+            // Effective down for this binding (raw button AND all modifiers held)
             bool curDown = rawDown && modsDown;
+            bool prevEffective = prevDown && modsDown; // Previous frame's effective state
+
+            // Edge detection based on effective state transitions
+            bool isPressed = !prevEffective && curDown;
+            bool isReleased = prevEffective && !curDown;
 
             // ActionOutput
             if (binding.Output is ActionOutput ao)
             {
                 var existing = _actions.GetValueOrDefault(ao.Action);
-
-                // IMPORTANT: edges derived from effective "action down", not raw control down.
-                bool isPressed = !existing.Down && curDown;
-                bool isReleased = existing.Down && !curDown;
 
                 didTrigger = trig.ButtonEdge switch
                 {
