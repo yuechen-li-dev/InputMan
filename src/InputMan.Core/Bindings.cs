@@ -25,7 +25,7 @@ public sealed class BindingTrigger
     public ControlKey Control { get; init; }
     public TriggerType Type { get; init; } = TriggerType.Button;
 
-    // NEW: chord modifiers (buttons that must be held)
+    // Chord modifiers (buttons that must be held)
     public ControlKey[] Modifiers { get; init; } = Array.Empty<ControlKey>();
 
     // Button triggers

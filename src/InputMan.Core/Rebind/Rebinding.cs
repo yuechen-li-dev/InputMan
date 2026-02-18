@@ -16,6 +16,23 @@ public sealed class RebindRequest
     public IReadOnlyList<ControlKey>? CandidateButtons { get; set; }
     public IReadOnlyList<ControlKey>? CandidateAxes { get; set; }
 
+    // --- Chord capture ---
+    /// <summary>
+    /// If true, button rebinding can capture chord modifiers (e.g. Shift+K).
+    /// Modifiers are determined by <see cref="ModifierControls"/>.
+    /// </summary>
+    public bool AllowChord { get; set; } = false;
+
+    /// <summary>
+    /// Controls treated as chord modifiers during capture.
+    /// If null/empty, chord capture is effectively disabled even if <see cref="AllowChord"/> is true.
+    /// </summary>
+    public IReadOnlySet<ControlKey>? ModifierControls { get; set; }
+
+    /// <summary>Maximum number of modifiers captured into the chord.</summary>
+    public int MaxModifiers { get; set; } = 2;
+
+
     // --- Guardrails ---
     /// <summary>If provided, only these device kinds can be captured.</summary>
     public IReadOnlySet<DeviceKind>? AllowedDevices { get; set; }
@@ -37,6 +54,7 @@ public sealed class RebindResult
     public bool Succeeded { get; init; }
     public string? Error { get; init; }
     public ControlKey? BoundControl { get; init; }
+    public IReadOnlyList<ControlKey>? BoundModifiers { get; init; }
 }
 
 public interface IRebindSession
@@ -141,12 +159,15 @@ internal sealed class RebindSession(
         if (trigType == TriggerType.Button)
         {
             if (TryCaptureButton(snapshot, out var key))
-                ApplyAndComplete(key);
+            {
+                var mods = CaptureChordModifiers(snapshot, key);
+                ApplyAndComplete(key, mods);
+            }
         }
         else // Axis or DeltaAxis
         {
             if (TryCaptureAxis(snapshot, trigType, out var key))
-                ApplyAndComplete(key);
+                ApplyAndComplete(key, Array.Empty<ControlKey>());
         }
     }
 
@@ -182,6 +203,13 @@ internal sealed class RebindSession(
 
             if (snapshot.TryGetButton(key, out var down) && down && !_downButtons.Contains(key))
             {
+                // In chord mode, allow "modifier keys" to be pressed first without completing.
+                if (_request.AllowChord && _request.ModifierControls is { Count: > 0 } && _request.ModifierControls.Contains(key))
+                {
+                    _downButtons.Add(key);
+                    continue;
+                }
+
                 captured = key;
                 return true;
             }
@@ -230,7 +258,45 @@ internal sealed class RebindSession(
         return false;
     }
 
-    private void ApplyAndComplete(ControlKey newControl)
+
+    private ControlKey[] CaptureChordModifiers(InputSnapshot snapshot, ControlKey primary)
+    {
+        if (!_request.AllowChord)
+            return Array.Empty<ControlKey>();
+
+        var modSet = _request.ModifierControls;
+        if (modSet is null || modSet.Count == 0)
+            return Array.Empty<ControlKey>();
+
+        var max = _request.MaxModifiers;
+        if (max <= 0)
+            return Array.Empty<ControlKey>();
+
+        var mods = new List<ControlKey>(capacity: Math.Min(max, modSet.Count));
+
+        // Deterministic order: iterate ButtonsToWatch.
+        foreach (var k in ButtonsToWatch)
+        {
+            if (mods.Count >= max)
+                break;
+
+            if (k.Equals(primary))
+                continue;
+
+            if (!modSet.Contains(k))
+                continue;
+
+            if (!IsAllowedCandidate(k, TriggerType.Button))
+                continue;
+
+            if (snapshot.TryGetButton(k, out var down) && down)
+                mods.Add(k);
+        }
+
+        return mods.Count == 0 ? Array.Empty<ControlKey>() : mods.ToArray();
+    }
+
+    private void ApplyAndComplete(ControlKey newControl, ControlKey[] modifiers)
     {
         if (!IsAllowedCandidate(newControl, _originalBinding.Trigger.Type))
         {
@@ -273,6 +339,7 @@ internal sealed class RebindSession(
                 Type = old.Trigger.Type,
                 ButtonEdge = old.Trigger.ButtonEdge,
                 Threshold = old.Trigger.Threshold,
+                Modifiers = modifiers,
             },
             Output = old.Output,
             Consume = old.Consume,
@@ -287,7 +354,7 @@ internal sealed class RebindSession(
         // Rebuild known controls so edge tracking includes the newly bound control
         _engine.RebuildKnownControlsFromRebind();
 
-        Complete(new RebindResult { Succeeded = true, BoundControl = newControl });
+        Complete(new RebindResult { Succeeded = true, BoundControl = newControl, BoundModifiers = modifiers });
     }
 
     private void Complete(RebindResult result)
