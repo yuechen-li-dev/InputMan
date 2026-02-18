@@ -1,9 +1,6 @@
 ﻿using InputMan.Core;
 using InputMan.Core.Rebind;
 using Stride.Input;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace InputMan.StrideConn;
 

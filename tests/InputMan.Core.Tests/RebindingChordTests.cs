@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using InputMan.Core;
-using InputMan.Core.Rebind;
+﻿using InputMan.Core.Rebind;
 using InputMan.Core.Validation;
 using Xunit;
 

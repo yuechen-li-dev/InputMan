@@ -1,7 +1,5 @@
 ﻿using InputMan.Core;
 using InputMan.Core.Serialization;
-using System;
-using System.IO;
 
 namespace InputMan.StrideConn;
 
