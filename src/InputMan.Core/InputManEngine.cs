@@ -329,27 +329,44 @@ public sealed class InputManEngine : IInputMan
 
         else if (trig.Type is TriggerType.Button)
         {
-            // 1. Determine state changes once
-            bool curDown = snapshot.TryGetButton(control, out var cur) && cur;
-            bool prevDown = _prevButtons.TryGetValue(control, out var prev) && prev;
-            bool isPressed = !prevDown && curDown;
-            bool isReleased = prevDown && !curDown;
+            // Raw button
+            bool rawDown = snapshot.TryGetButton(control, out var cur) && cur;
 
-            // 2. Resolve the trigger firing state
-            didTrigger = trig.ButtonEdge switch
+            // Modifiers (chord)
+            bool modsDown = true;
+            var mods = trig.Modifiers;
+            if (mods is { Length: > 0 })
             {
-                ButtonEdge.Down => curDown,
-                ButtonEdge.Pressed => isPressed,
-                ButtonEdge.Released => isReleased,
-                _ => false
-            };
+                for (int i = 0; i < mods.Length; i++)
+                {
+                    if (!snapshot.TryGetButton(mods[i], out var md) || !md)
+                    {
+                        modsDown = false;
+                        break;
+                    }
+                }
+            }
 
-            // 3. Handle ActionOutput
+            // Effective down for this binding
+            bool curDown = rawDown && modsDown;
+
+            // ActionOutput
             if (binding.Output is ActionOutput ao)
             {
                 var existing = _actions.GetValueOrDefault(ao.Action);
 
-                // Determine new state and event phase via pattern matching
+                // IMPORTANT: edges derived from effective "action down", not raw control down.
+                bool isPressed = !existing.Down && curDown;
+                bool isReleased = existing.Down && !curDown;
+
+                didTrigger = trig.ButtonEdge switch
+                {
+                    ButtonEdge.Down => curDown,
+                    ButtonEdge.Pressed => isPressed,
+                    ButtonEdge.Released => isReleased,
+                    _ => false
+                };
+
                 var (newState, phase) = (isPressed, isReleased) switch
                 {
                     (true, _) => (existing with { Down = true, PressedThisFrame = true }, ActionPhase.Pressed),
@@ -366,22 +383,27 @@ public sealed class InputManEngine : IInputMan
                 return true;
             }
 
-            // 4. Handle AxisOutput
+            // AxisOutput (ButtonAxis style)
             if (binding.Output is AxisOutput ax)
             {
-                // A simple boolean check: does the current state satisfy the trigger requirement?
-                if (!didTrigger || trig.ButtonEdge == ButtonEdge.Released)
+                // Use raw prev control for pressed if you want it, but simplest:
+                didTrigger = trig.ButtonEdge switch
+                {
+                    ButtonEdge.Down => curDown,
+                    ButtonEdge.Pressed => false,   // keep simple for now
+                    ButtonEdge.Released => false,
+                    _ => false
+                };
+
+                if (!didTrigger)
                     return false;
 
                 _axes[ax.Axis] = _axes.GetValueOrDefault(ax.Axis) + ax.Scale;
-
                 axisEvent = new AxisEvent(ax.Axis, _axes[ax.Axis], FrameIndex, _timeSeconds);
                 actionEvent = null;
                 return true;
             }
-
         }
-
         return false;
     }
 
@@ -390,12 +412,20 @@ public sealed class InputManEngine : IInputMan
         // 1. Extract all bindings from the profile maps
         var allBindings = _profile.Maps.Values.SelectMany(m => m.Bindings);
 
-        // 2. Refresh the Button Controls
+        // 2. Refresh the Button Controls with modifiers
         _knownButtonControls.Clear();
         _knownButtonControls.UnionWith(
-            allBindings.Where(b => b.Trigger.Type == TriggerType.Button)
-                       .Select(b => b.Trigger.Control)
+            allBindings
+                .Where(b => b.Trigger.Type == TriggerType.Button)
+                .SelectMany(b =>
+                {
+                    var t = b.Trigger;
+                    if (t.Modifiers is { Length: > 0 })
+                        return t.Modifiers.Append(t.Control);
+                    return [t.Control];
+                })
         );
+
 
         // 3. Refresh the Axis Controls
         _knownAxisControls.Clear();

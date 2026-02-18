@@ -25,12 +25,16 @@ public sealed class BindingTrigger
     public ControlKey Control { get; init; }
     public TriggerType Type { get; init; } = TriggerType.Button;
 
+    // NEW: chord modifiers (buttons that must be held)
+    public ControlKey[] Modifiers { get; init; } = Array.Empty<ControlKey>();
+
     // Button triggers
     public ButtonEdge ButtonEdge { get; init; } = ButtonEdge.Down;
 
     // Axis triggers
     public float Threshold { get; init; } = 0f;
 }
+
 
 public abstract record BindingOutput;
 

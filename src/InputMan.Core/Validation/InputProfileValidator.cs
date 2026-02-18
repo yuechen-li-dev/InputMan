@@ -99,6 +99,33 @@ public static class InputProfileValidator
         if (t.Control.Device == 0)
             throw new InvalidOperationException($"Binding \"{bindingName}\" has Control.Device=0 (uninitialized).");
 
+        // Chord modifiers are only valid for button triggers
+        if (t.Modifiers is { Length: > 0 })
+        {
+            if (t.Type != TriggerType.Button)
+                throw new InvalidOperationException(
+                    $"Binding \"{bindingName}\" uses Modifiers but is TriggerType.{t.Type}. Modifiers are only supported for Button.");
+
+            // Basic sanity checks
+            for (int i = 0; i < t.Modifiers.Length; i++)
+            {
+                var m = t.Modifiers[i];
+                if (m.Device == 0)
+                    throw new InvalidOperationException($"Binding \"{bindingName}\" has a modifier with Device=0 (uninitialized).");
+                if (m.Equals(t.Control))
+                    throw new InvalidOperationException($"Binding \"{bindingName}\" has a modifier that equals its primary Control.");
+            }
+
+            // Optional: prevent duplicates (cheap)
+            if (t.Modifiers.Length > 1)
+            {
+                var set = new HashSet<ControlKey>();
+                foreach (var m in t.Modifiers)
+                    if (!set.Add(m))
+                        throw new InvalidOperationException($"Binding \"{bindingName}\" has duplicate modifier: {m}.");
+            }
+        }
+
         // DeviceIndex is byte; any value is fine, but you can constrain if you want.
 
         if (t.Type == TriggerType.Axis || t.Type == TriggerType.DeltaAxis)
