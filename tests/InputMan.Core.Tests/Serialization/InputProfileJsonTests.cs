@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using InputMan.Core.Serialization;
+﻿using InputMan.Core.Serialization;
 using Xunit;
 
 namespace InputMan.Core.Tests.Serialization;

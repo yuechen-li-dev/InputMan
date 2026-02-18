@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Xunit;
-using InputMan.Core;
+﻿using Xunit;
 
 namespace InputMan.Core.Tests.Processors;
 

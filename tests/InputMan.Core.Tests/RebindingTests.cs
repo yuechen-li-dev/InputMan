@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Xunit;
-using InputMan.Core;
+﻿using Xunit;
+using InputMan.Core.Rebind;
 
 namespace InputMan.Core.Tests;
 

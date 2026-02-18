@@ -1,5 +1,6 @@
 ﻿using System;
 using InputMan.Core;
+using InputMan.Core.Rebind;
 using InputMan.StrideConn;
 using Stride.Core.Mathematics;
 using Stride.Input;
