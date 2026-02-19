@@ -2,12 +2,38 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Title>InputMan.Core</Title>
+
+    <!-- NuGet package metadata -->
+    <IsPackable>true</IsPackable>
+    <PackageId>InputMan.Core</PackageId>
     <Version>0.1.0</Version>
-    <Authors>yuechen-li-dev</Authors>
+    <Authors>Yuechen Li</Authors>
+    <Company></Company>
+
+    <Description>InputMan is a small, engine-agnostic input mapping library for .NET games: map physical inputs (keyboard/mouse/gamepad) to game actions and axes, layer maps with priorities, support consumption, and enable rebinding + JSON profile persistence.</Description>
+    <PackageTags>input;game;games;stride;rebinding;controls;gamedev</PackageTags>
+
+    <!-- Links -->
+    <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/yuechen-li-dev/InputMan</RepositoryUrl>
-    <Description>A powerful, flexible input management library for modern .NET game engines with first-class rebinding support.</Description>
+    <PackageProjectUrl>https://github.com/yuechen-li-dev/InputMan</PackageProjectUrl>
+
+    <!-- Licensing / readme -->
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Nice-to-have -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Make sure these files exist at the project root (or adjust paths). -->
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE.txt" Pack="true" PackagePath="\" Condition="Exists('..\..\LICENSE.txt')" />
+  </ItemGroup>
 
 </Project>

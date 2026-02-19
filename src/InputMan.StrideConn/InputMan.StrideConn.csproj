@@ -1,20 +1,47 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 
-  <ItemGroup>
-    <PackageReference Include="Stride" Version="4.3.0.2507" />
-    <PackageReference Include="Stride.Core.Mathematics" Version="4.3.0.2507" />
-    <PackageReference Include="Stride.Engine" Version="4.3.0.2507" />
-    <PackageReference Include="Stride.Input" Version="4.3.0.2507" />
-  </ItemGroup>
+		<!-- NuGet package metadata -->
+		<IsPackable>true</IsPackable>
+		<PackageId>InputMan.StrideConn</PackageId>
+		<Version>0.1.0</Version>
+		<Authors>Yuechen Li</Authors>
+		<Company></Company>
 
-  <ItemGroup>
-    <ProjectReference Include="..\InputMan.Core\InputMan.Core.csproj" />
-  </ItemGroup>
+		<Description>Stride connector for InputMan. Provides Stride input snapshot building, control codes, profile storage helpers, and a Stride game system runner so InputMan.Core can drive gameplay + UI input cleanly inside Stride projects.</Description>
+		<PackageTags>input;game;games;stride;rebinding;controls;gamedev</PackageTags>
+
+		<!-- Links -->
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/yuechen-li-dev/InputMan</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/yuechen-li-dev/InputMan</PackageProjectUrl>
+
+		<!-- Licensing / readme -->
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Stride.Engine" Version="4.3.0.2507" />
+		<PackageReference Include="Stride.Input" Version="4.3.0.2507" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\InputMan.Core\InputMan.Core.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- Make sure these files exist at the repo root (or adjust paths). -->
+		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\LICENSE.txt" Pack="true" PackagePath="\" Condition="Exists('..\..\LICENSE.txt')" />
+	</ItemGroup>
 
 </Project>
