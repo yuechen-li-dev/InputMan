@@ -9,7 +9,7 @@ namespace InputMan.Core;
 public static class Bind
 {
     /// <summary>
-    /// Basic digital action mapping.
+    /// Basic action mapping.
     /// </summary>
     public static Binding Action(
         ControlKey key,
@@ -25,6 +25,30 @@ public static class Bind
                 Control = key,
                 Type = TriggerType.Button,
                 ButtonEdge = edge,
+            },
+            Output = new ActionOutput(action),
+            Consume = consume,
+        };
+
+    /// <summary>
+    /// Action with chord/modifier keys (e.g., Shift+W for sprint).
+    /// </summary>
+    public static Binding ActionChord(
+        ControlKey key,
+        ActionId action,
+        ButtonEdge edge = ButtonEdge.Down,
+        ConsumeMode consume = ConsumeMode.None,
+        string? name = null,
+        params ControlKey[] modifiers)
+        => new()
+        {
+            Name = name ?? $"{action.Name}:{key}+mods",
+            Trigger = new BindingTrigger
+            {
+                Control = key,
+                Type = TriggerType.Button,
+                ButtonEdge = edge,
+                Modifiers = modifiers ?? [],
             },
             Output = new ActionOutput(action),
             Consume = consume,
@@ -52,6 +76,30 @@ public static class Bind
             Output = new AxisOutput(axis, scale),
             Consume = consume,
             Processors = processors.Length > 0 ? [.. processors] : [],
+        };
+
+    /// <summary>
+    /// Button-to-axis mapping with chord/modifier keys (e.g., Shift+W contributes more to MoveY).
+    /// </summary>
+    public static Binding ButtonAxisChord(
+        ControlKey key,
+        AxisId axis,
+        float scale,
+        ConsumeMode consume = ConsumeMode.None,
+        string? name = null,
+        params ControlKey[] modifiers)
+        => new()
+        {
+            Name = name ?? $"{axis.Name}:{key}:{scale}+mods",
+            Trigger = new BindingTrigger
+            {
+                Control = key,
+                Type = TriggerType.Button,
+                ButtonEdge = ButtonEdge.Down,
+                Modifiers = modifiers ?? [],
+            },
+            Output = new AxisOutput(axis, scale),
+            Consume = consume,
         };
 
     /// <summary>

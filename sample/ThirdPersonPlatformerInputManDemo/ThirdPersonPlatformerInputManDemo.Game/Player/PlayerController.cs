@@ -1,6 +1,7 @@
 // Copyright (c) .NET Foundation and Contributors (https://dotnetfoundation.org/ & https://stride3d.net) and Silicon Studio Corp. (https://www.siliconstudio.co.jp)
 // Distributed under the MIT license. See the LICENSE.md file in the project root for more information.
 using System;
+using InputMan.Core;
 using Stride.Core;
 using Stride.Core.Mathematics;
 using Stride.Engine;
@@ -14,6 +15,9 @@ namespace ThirdPersonPlatformerInputManDemo.Player
         [Display("Run Speed")]
         public float MaxRunSpeed { get; set; } = 10;
 
+        [Display("Sprint Speed")]
+        public float MaxSprintSpeed { get; set; } = 20;
+
         public static readonly EventKey<bool> IsGroundedEventKey = new EventKey<bool>();
 
         public static readonly EventKey<float> RunSpeedEventKey = new EventKey<float>();
@@ -25,8 +29,10 @@ namespace ThirdPersonPlatformerInputManDemo.Player
         private float yawOrientation;
 
         private readonly EventReceiver<Vector3> moveDirectionEvent = new EventReceiver<Vector3>(PlayerInput.MoveDirectionEventKey);
-
         private readonly EventReceiver<bool> jumpEvent = new EventReceiver<bool>(PlayerInput.JumpEventKey);
+
+        // InputMan for sprint detection - use the same ID defined in DefaultPlatformerProfile
+        private IInputMan? _inputMan;
 
         /// <summary>
         /// Allow for some latency from the user input to make jumping appear more natural
@@ -54,6 +60,9 @@ namespace ThirdPersonPlatformerInputManDemo.Player
             if (character == null) throw new ArgumentException("Please add a CharacterComponent to the entity containing PlayerController!");
 
             modelChildEntity = Entity.GetChild(0);
+
+            // Get InputMan for sprint detection
+            _inputMan = Game.Services.GetService<IInputMan>();
         }
 
         /// <summary>
@@ -61,9 +70,14 @@ namespace ThirdPersonPlatformerInputManDemo.Player
         /// </summary>
         public override void Update()
         {
-           // var dt = Game.UpdateTime.Elapsed.Milliseconds * 0.001;
-            Move(MaxRunSpeed);
+            // Lazy acquire InputMan if not available at Start
+            _inputMan ??= Game.Services.GetService<IInputMan>();
 
+            // Determine speed based on sprint action (use the ID from DefaultPlatformerProfile)
+            var isSprinting = _inputMan?.IsDown(DefaultPlatformerProfile.Sprint) ?? false;
+            var speed = isSprinting ? MaxSprintSpeed : MaxRunSpeed;
+
+            Move(speed);
             Jump();
         }
 
@@ -127,7 +141,7 @@ namespace ThirdPersonPlatformerInputManDemo.Player
             moveDirectionEvent.TryReceive(out newMoveDirection);
 
             // Allow very simple inertia to the character to make animation transitions more fluid
-            moveDirection = moveDirection*0.85f + newMoveDirection *0.15f;
+            moveDirection = moveDirection * 0.85f + newMoveDirection * 0.15f;
 
             character.SetVelocity(moveDirection * speed);
 
@@ -137,7 +151,7 @@ namespace ThirdPersonPlatformerInputManDemo.Player
             // Character orientation
             if (moveDirection.Length() > 0.001)
             {
-                yawOrientation = MathUtil.RadiansToDegrees((float) Math.Atan2(-moveDirection.Z, moveDirection.X) + MathUtil.PiOverTwo);
+                yawOrientation = MathUtil.RadiansToDegrees((float)Math.Atan2(-moveDirection.Z, moveDirection.X) + MathUtil.PiOverTwo);
             }
             modelChildEntity.Transform.Rotation = Quaternion.RotationYawPitchRoll(MathUtil.DegreesToRadians(yawOrientation), 0, 0);
         }

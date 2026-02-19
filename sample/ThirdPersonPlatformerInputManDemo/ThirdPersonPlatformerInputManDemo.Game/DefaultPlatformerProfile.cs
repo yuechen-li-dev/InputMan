@@ -15,6 +15,7 @@ public static class DefaultPlatformerProfile
 {
     // Action/Axis IDs (referenced by PlayerInput.cs)
     public static readonly ActionId Jump = new("Jump");
+    public static readonly ActionId Sprint = new("Sprint");
     public static readonly ActionId LookLock = new("LookLock");
     public static readonly ActionId LookUnlock = new("LookUnlock");
     public static readonly ActionId Pause = new("Pause");
@@ -69,6 +70,9 @@ public static class DefaultPlatformerProfile
                 ButtonAxis(K(Keys.D), MoveX, +1, name: BindingNames.MoveRightKeyboard),
                 ButtonAxis(K(Keys.S), MoveY, -1, name: BindingNames.MoveBackKeyboard),
                 ButtonAxis(K(Keys.W), MoveY, +1, name: BindingNames.MoveForwardKeyboard),
+
+                // Sprint (Shift modifier with WASD)
+                ActionChord(K(Keys.W), Sprint, ButtonEdge.Down, name: "Sprint.Kb.W", modifiers: K(Keys.LeftShift)),
 
                 // Keyboard jump
                 Action(K(Keys.Space), Jump, ButtonEdge.Pressed, name: BindingNames.JumpKeyboard),

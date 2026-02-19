@@ -103,18 +103,29 @@ public sealed class StrideInputManSystem : GameSystem
             {
                 var control = binding.Trigger.Control;
 
-                // Decide whether it’s a button or axis based on trigger type.
+                // Decide whether it's a button or axis based on trigger type.
                 if (binding.Trigger.Type == TriggerType.Button)
+                {
                     _watchedButtons.Add(control);
+
+                    // CRITICAL: Also watch modifier keys (chords)
+                    if (binding.Trigger.Modifiers is { Length: > 0 } mods)
+                    {
+                        foreach (var mod in mods)
+                        {
+                            _watchedButtons.Add(mod);
+                        }
+                    }
+                }
                 else
+                {
                     _watchedAxes.Add(control);
-                //Debug: Get all bindings
-                //System.Diagnostics.Debug.WriteLine($"BIND: map={map.Id.Name} name={binding.Name} type={binding.Trigger.Type} ctrl={binding.Trigger.Control.Device}:{binding.Trigger.Control.DeviceIndex}:{binding.Trigger.Control.Code}");
+                }
             }
         }
 
         // NOTE:
         // If you ever bind Axis2 via derived axes only (not directly via triggers),
-        // you’re fine—Axis2 is computed in Core from Axis ids, not controls.
+        // you're fine—Axis2 is computed in Core from Axis ids, not controls.
     }
 }
