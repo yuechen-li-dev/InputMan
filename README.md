@@ -50,7 +50,47 @@ Install-Package InputMan.StrideConn
 
 ## 🚀 Quick Start (Stride Engine)
 
-### Step 1: Install InputMan (30 seconds)
+### Step 1: Create Your Input Profile
+
+Create `MyGameProfile.cs` to define your controls:
+
+```csharp
+using InputMan.Core;
+using InputMan.StrideConn;
+using Stride.Input;
+using static InputMan.Core.Bind;
+using static InputMan.StrideConn.StrideKeys;
+
+public static class MyGameProfile
+{
+    public static InputProfile Create()
+    {
+        var gameplay = new ActionMapDefinition
+        {
+            Id = new ActionMapId("Gameplay"),
+            Priority = 10,
+            Bindings =
+            [
+                // Jump on Space key
+                Action(K(Keys.Space), new ActionId("Jump"), ButtonEdge.Pressed),
+                
+                // Jump on gamepad A button
+                Action(PadBtn(0, GamePadButton.A), new ActionId("Jump"), ButtonEdge.Pressed),
+            ]
+        };
+        
+        return new InputProfile
+        {
+            Maps = new Dictionary<string, ActionMapDefinition>
+            {
+                ["Gameplay"] = gameplay
+            }
+        };
+    }
+}
+```
+
+### Step 2: Install InputMan (30 seconds)
 
 Create `InstallInputMan.cs` in your project:
 
@@ -84,7 +124,7 @@ public class InstallInputMan : StartupScript
 
 **Drag this script onto your Game Manager entity in the scene.**
 
-### Step 2: Read Input in Your Scripts
+### Step 3: Read Input in Your Scripts
 
 ```csharp
 using InputMan.Core;
