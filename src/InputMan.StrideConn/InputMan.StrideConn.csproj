@@ -8,7 +8,7 @@
 		<!-- NuGet package metadata -->
 		<IsPackable>true</IsPackable>
 		<PackageId>InputMan.StrideConn</PackageId>
-		<Version>0.1.0</Version>
+		<Version>0.1.1</Version>
 		<Authors>Yuechen Li</Authors>
 
 		<Description>Stride connector for InputMan. Provides Stride input snapshot building, control codes, profile storage helpers, and a Stride game system runner so InputMan.Core can drive gameplay + UI input cleanly inside Stride projects.</Description>

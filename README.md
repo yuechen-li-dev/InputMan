@@ -2,14 +2,14 @@
 
 **A powerful, flexible input management library for modern .NET game engines with first-class rebinding support.**
 
-[![NuGet](https://img.shields.io/badge/nuget-v0.1.0-blue)](https://www.nuget.org/packages/InputMan.Core/) 
+[![NuGet](https://img.shields.io/badge/nuget-v0.1.1-blue)](https://www.nuget.org/packages/InputMan.Core/) 
 [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/yuechen-li-dev/InputMan/blob/master/LICENSE.txt)
 
 InputMan provides a modern, engine-agnostic input system with action maps, priority-based consumption, and seamless runtime rebinding. Perfect for games that need professional input handling.
 
 ## ⚠️ Pre-Release Notice
 
-**This is v0.1.0** - the initial public release. The API is functional and tested, but may evolve before v1.0 based on community feedback. Please report issues and suggestions on GitHub!
+**This is v0.1.x** - the initial public release. The API is functional and tested, but may evolve before v1.0 based on community feedback. Please report issues and suggestions on GitHub!
 
 ---
 
