@@ -2,7 +2,7 @@
 
 All notable changes to InputMan will be documented in this file.
 
-## [0.1.1] - 2024-XX-XX
+## [0.1.1] - 2026-02-19
 
 ### Fixed
 - Quick Start section in README now includes complete profile creation step
@@ -11,7 +11,7 @@ All notable changes to InputMan will be documented in this file.
 ### Changed
 - Improved Quick Start flow with clearer 3-step process
 
-## [0.1.0] - 2024-XX-XX
+## [0.1.0] - 2026-02-19
 
 ### Added
 - Initial public release
