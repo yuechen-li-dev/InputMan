@@ -14,7 +14,7 @@ public sealed class InstallInputMan : StartupScript
     /// If true, bypass JSON profile loading and always use the code-defined default profile.
     /// Handy for toggling in Game Studio while iterating.
     /// </summary>
-    public bool UseCodeProfile { get; set; } = true;
+    public bool UseCodeProfile { get; set; } = false;
 
     /// <summary>
     /// If true, ensure a user profile exists on disk so rebinding can persist.
