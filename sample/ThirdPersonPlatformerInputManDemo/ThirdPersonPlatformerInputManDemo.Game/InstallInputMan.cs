@@ -10,6 +10,17 @@ namespace ThirdPersonPlatformerInputManDemo;
 /// </summary>
 public sealed class InstallInputMan : StartupScript
 {
+    /// <summary>
+    /// If true, bypass JSON profile loading and always use the code-defined default profile.
+    /// Handy for toggling in Game Studio while iterating.
+    /// </summary>
+    public bool UseCodeProfile { get; set; } = true;
+
+    /// <summary>
+    /// If true, ensure a user profile exists on disk so rebinding can persist.
+    /// When UseCodeProfile=true, this will only seed the file if missing.
+    /// </summary>
+    public bool SeedUserProfileIfMissing { get; set; } = true;
     public override void Start()
     {
         // 1. Create profile storage (uses default paths)
@@ -17,11 +28,26 @@ public sealed class InstallInputMan : StartupScript
             appName: "ThirdPersonPlatformerInputManDemo",
             defaultProfileFactory: DefaultPlatformerProfile.Create);
 
-        // 2. Ensure user profile exists (for rebinding)
-        storage.EnsureUserProfileExists();
+        InputProfile profile;
 
-        // 3. Load profile
-        var profile = storage.LoadProfile();
+        if (UseCodeProfile)
+        {
+            // Code-first override (skip JSON entirely) for debug
+            profile = DefaultPlatformerProfile.Create();
+
+            // Optional: seed a writable user profile for rebinding persistence (never overwrite)
+            if (SeedUserProfileIfMissing && !storage.ProfileExists())
+                storage.SaveProfile(profile);
+        }
+        else
+        {
+            // 2. Normal path: JSON-first (user profile, then bundled, then code fallback)
+            if (SeedUserProfileIfMissing)
+                storage.EnsureUserProfileExists();
+
+            // 3. Load Profile
+            profile = storage.LoadProfile();
+        }
 
         // 4. Install InputMan system with both maps active
         var inputSystem = new StrideInputManSystem(
