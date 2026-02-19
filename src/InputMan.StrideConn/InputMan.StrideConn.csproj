@@ -10,23 +10,23 @@
 		<PackageId>InputMan.StrideConn</PackageId>
 		<Version>0.1.0</Version>
 		<Authors>Yuechen Li</Authors>
-		<Company></Company>
 
 		<Description>Stride connector for InputMan. Provides Stride input snapshot building, control codes, profile storage helpers, and a Stride game system runner so InputMan.Core can drive gameplay + UI input cleanly inside Stride projects.</Description>
 		<PackageTags>input;game;games;stride;rebinding;controls;gamedev</PackageTags>
 
-		<!-- Links -->
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/yuechen-li-dev/InputMan</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/yuechen-li-dev/InputMan</PackageProjectUrl>
 
-		<!-- Licensing / readme -->
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
-		<ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
+
+		<!-- Reference switch: dev uses ProjectReference, pack uses PackageReference -->
+		<UseProjectReferences Condition="'$(UseProjectReferences)'==''">true</UseProjectReferences>
+		<InputManCoreVersion Condition="'$(InputManCoreVersion)'==''">0.1.0</InputManCoreVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -34,12 +34,15 @@
 		<PackageReference Include="Stride.Input" Version="4.3.0.2507" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(UseProjectReferences)'=='true'">
 		<ProjectReference Include="..\InputMan.Core\InputMan.Core.csproj" />
 	</ItemGroup>
 
+	<ItemGroup Condition="'$(UseProjectReferences)'!='true'">
+		<PackageReference Include="InputMan.Core" Version="$(InputManCoreVersion)" />
+	</ItemGroup>
+
 	<ItemGroup>
-		<!-- Make sure these files exist at the repo root (or adjust paths). -->
 		<None Include="..\..\README.md" Pack="true" PackagePath="\" />
 		<None Include="..\..\LICENSE.txt" Pack="true" PackagePath="\" Condition="Exists('..\..\LICENSE.txt')" />
 	</ItemGroup>
