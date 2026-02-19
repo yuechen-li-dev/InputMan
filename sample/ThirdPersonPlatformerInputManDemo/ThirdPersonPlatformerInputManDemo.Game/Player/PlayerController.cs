@@ -32,7 +32,7 @@ namespace ThirdPersonPlatformerInputManDemo.Player
         private readonly EventReceiver<bool> jumpEvent = new EventReceiver<bool>(PlayerInput.JumpEventKey);
 
         // InputMan for sprint detection - use the same ID defined in DefaultPlatformerProfile
-        private IInputMan? _inputMan;
+        private IInputMan _inputMan;
 
         /// <summary>
         /// Allow for some latency from the user input to make jumping appear more natural

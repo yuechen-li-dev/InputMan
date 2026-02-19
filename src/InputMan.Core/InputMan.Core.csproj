@@ -3,6 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
+    <Title>InputMan.Core</Title>
+    <Version>0.1.0</Version>
+    <Authors>yuechen-li-dev</Authors>
+    <RepositoryUrl>https://github.com/yuechen-li-dev/InputMan</RepositoryUrl>
+    <Description>A powerful, flexible input management library for modern .NET game engines with first-class rebinding support.</Description>
   </PropertyGroup>
 
 </Project>
