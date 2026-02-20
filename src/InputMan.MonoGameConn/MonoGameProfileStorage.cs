@@ -122,46 +122,4 @@ public sealed class MonoGameProfileStorage : IProfileStorage
     {
         return File.Exists(_userProfilePath);
     }
-
-    /// <summary>
-    /// Interface for profile serializers (JSON, TOML, XML, etc.).
-    /// Allows swapping serialization formats without changing storage logic.
-    /// </summary>
-    public interface IProfileSerializer
-    {
-        /// <summary>
-        /// File extension for this serializer (e.g., "json", "toml").
-        /// </summary>
-        string FileExtension { get; }
-
-        /// <summary>
-        /// Serialize a profile to a string.
-        /// </summary>
-        string Serialize(InputProfile profile);
-
-        /// <summary>
-        /// Deserialize a profile from a string.
-        /// </summary>
-        InputProfile Deserialize(string content);
-    }
-
-
-    /// <summary>
-    /// JSON serializer implementation (default).
-    /// Uses InputMan.Core's built-in JSON serialization.
-    /// </summary>
-    public class JsonProfileSerializer : IProfileSerializer
-    {
-        public string FileExtension => "json";
-
-        public string Serialize(InputProfile profile)
-        {
-            return InputProfileJson.Save(profile, indented: true);
-        }
-
-        public InputProfile Deserialize(string content)
-        {
-            return InputProfileJson.Load(content);
-        }
-    }
 }
