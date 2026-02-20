@@ -1,6 +1,8 @@
 <Solution>
   <Project Path="src/InputMan.Core/InputMan.Core.csproj" />
+  <Project Path="src/InputMan.MonoGameConn/InputMan.MonoGameConn.csproj" Id="ab01580d-0032-4f38-98e4-bb1cff0b2745" />
   <Project Path="src/Inputman.StrideConn/Inputman.StrideConn.csproj" />
   <Project Path="tests/InputMan.Core.Tests/InputMan.Core.Tests.csproj" />
+  <Project Path="tests/InputMan.MonoGameConn.Tests/InputMan.MonoGameConn.Tests.csproj" Id="0a59608b-cc40-4f68-84e0-c2fedbffe515" />
   <Project Path="tests/InputMan.StrideConn.Tests/InputMan.StrideConn.Tests.csproj" />
 </Solution>
