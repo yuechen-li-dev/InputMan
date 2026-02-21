@@ -15,7 +15,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Platformer2D
+namespace Platformer2D.Core.Game.Player
 {
     /// <summary>
     /// Our fearless adventurer!
@@ -35,6 +35,13 @@ namespace Platformer2D
         private SoundEffect killedSound;
         private SoundEffect jumpSound;
         private SoundEffect fallSound;
+
+        // Input / control handling is delegated to PlayerController.
+        private readonly PlayerController controller = new PlayerController();
+
+        // These are used by PlayerController to keep input logic out of Player.
+        internal void SetMovement(float value) => movement = value;
+        internal void SetJumping(bool value) => isJumping = value;
 
         public Level Level
         {
@@ -167,7 +174,7 @@ namespace Platformer2D
         /// </summary>
         public void Update(GameTime gameTime, IInputMan input)
         {
-            GetInput(input);
+            controller.UpdateInput(this, input);
 
             ApplyPhysics(gameTime);
 
@@ -187,31 +194,6 @@ namespace Platformer2D
 
             }
 
-        }
-
-        /// <summary>
-        /// Gets player horizontal movement and jump commands from InputMan.
-        /// REFACTORED: Now uses InputMan instead of raw MonoGame input states.
-        /// 
-        /// NOTE: We check WasPressed OR if already jumping and button still down.
-        /// This matches the original behavior where the button being held continues the jump.
-        /// </summary>
-        private void GetInput(IInputMan input)
-        {
-            // Get horizontal movement from InputMan
-            // This automatically combines keyboard (WASD/Arrows) and gamepad stick
-            movement = input.GetAxis(Platformer2DProfile.MoveX);
-
-            // Check if the player wants to jump
-            // Original game logic: isJumping is true whenever the jump button is down
-            // We need to use WasPressed for the initial trigger, then maintain state
-            // The DoJump method will handle when to actually apply jump velocity
-
-            // Set isJumping if button was just pressed, or keep it true if still held and we're jumping
-            if (input.WasPressed(Platformer2DProfile.Jump))
-            {
-                isJumping = true;
-            }
         }
 
         /// <summary>
