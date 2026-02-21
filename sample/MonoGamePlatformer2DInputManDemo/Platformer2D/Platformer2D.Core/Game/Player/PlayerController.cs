@@ -76,8 +76,7 @@ namespace Platformer2D.Core.Game.Player
 
         // Jump tuning (moved from Player)
         private const float MaxJumpTime = 0.35f;
-        private const float JumpLaunchVelocity = -3500.0f;
-        private const float JumpControlPower = 0.14f;
+        private const float JumpLaunchVelocity = -500.0f;
 
         // Jump state (moved from Player)
         private float jumpTime;
@@ -85,37 +84,33 @@ namespace Platformer2D.Core.Game.Player
 
         private float DoJump(Player player, float velocityY, GameTime gameTime)
         {
-            // IMPORTANT: Keep this logic identical to your current Player.DoJump.
-            // The only differences should be:
-            // - read jump input via player.GetIsJumping()
-            // - read grounded/alive via player.IsOnGround / player.IsAlive
-            // - store jumpTime/wasJumping on the controller (fields above)
+            bool isJumping = player.GetIsJumping();
+            float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (player.GetIsJumping())
+            // 1. START JUMP: If we just pressed the button and are on the ground.
+            if (isJumping && !wasJumping && player.IsOnGround)
             {
-                if ((!wasJumping && player.IsOnGround) || jumpTime > 0.0f)
-                {
-                    if (jumpTime == 0.0f)
-                        player.PlayJumpSfx();
-                    jumpTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    player.PlayJumpAnimation();
-                }
+                jumpTime = 0.01f; // Setting to a tiny value to flag that a jump is active
+                player.PlayJumpSfx();
+            }
 
-                if (0.0f < jumpTime && jumpTime <= MaxJumpTime)
-                {
-                    velocityY = JumpLaunchVelocity * (1.0f - (float)Math.Pow(jumpTime / MaxJumpTime, JumpControlPower));
-                }
-                else
-                {
-                    jumpTime = 0.0f;
-                }
+            // 2. CONTINUE JUMP: If the button is held and we haven't hit the time limit.
+            if (isJumping && jumpTime > 0.0f && jumpTime < MaxJumpTime)
+            {
+                jumpTime += elapsed;
+                player.PlayJumpAnimation();
+
+                // Simple linear jump: Apply a constant upward velocity while holding.
+                // This replaces the complex Math.Pow logic.
+                velocityY = JumpLaunchVelocity;
             }
             else
             {
+                // 3. STOP JUMP: If the button is released or we hit the max time.
                 jumpTime = 0.0f;
             }
 
-            wasJumping = player.GetIsJumping();
+            wasJumping = isJumping;
             return velocityY;
         }
     }
