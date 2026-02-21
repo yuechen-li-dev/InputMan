@@ -20,7 +20,7 @@ namespace Platformer2D.Core.Game.Player
     /// <summary>
     /// Our fearless adventurer!
     /// </summary>
-    class Player
+    internal class Player
     {
         // Animations
         private Animation idleAnimation;
@@ -37,7 +37,7 @@ namespace Platformer2D.Core.Game.Player
         private SoundEffect fallSound;
 
         // Input / control handling is delegated to PlayerController.
-        private readonly PlayerController controller = new PlayerController();
+        private readonly PlayerController controller = new();
 
         // These are used by PlayerController to keep input logic out of Player.
         internal void SetMovement(float value) => movement = value;
@@ -179,6 +179,7 @@ namespace Platformer2D.Core.Game.Player
             ApplyPhysics(gameTime);
 
             UpdateAnimation();
+
         }
 
         private void UpdateAnimation()
@@ -193,11 +194,15 @@ namespace Platformer2D.Core.Game.Player
                 {
                     sprite.PlayAnimation(idleAnimation);
                 }
-
-                // Clear input.
-                movement = 0.0f;
-                isJumping = false;
+                ClearInput();
             }
+        }
+
+        private void ClearInput()
+        {
+            // Clear input every frame is goal, currently only when grounded/alive to keep behavior consistent as template.
+            movement = 0.0f;
+            isJumping = false;
         }
 
         /// <summary>
