@@ -205,7 +205,7 @@ namespace Platformer2D
 
             // Check for continue/restart input
             // Use InputMan for jump action (which is bound to Space/A)
-            bool continuePressed = inputMan.IsDown(Platformer2DProfile.Jump) || touchState.AnyTouch();
+            bool continuePressed = inputMan.WasPressed(Platformer2DProfile.Jump) || touchState.AnyTouch();
 
             // Perform the appropriate action to advance the game and
             // to get the player back to playing.

@@ -181,16 +181,20 @@ namespace Platformer2D
                 {
                     sprite.PlayAnimation(idleAnimation);
                 }
-            }
-
             // Clear input.
             movement = 0.0f;
             isJumping = false;
+
+            }
+
         }
 
         /// <summary>
         /// Gets player horizontal movement and jump commands from InputMan.
         /// REFACTORED: Now uses InputMan instead of raw MonoGame input states.
+        /// 
+        /// NOTE: We check WasPressed OR if already jumping and button still down.
+        /// This matches the original behavior where the button being held continues the jump.
         /// </summary>
         private void GetInput(IInputMan input)
         {
@@ -199,8 +203,15 @@ namespace Platformer2D
             movement = input.GetAxis(Platformer2DProfile.MoveX);
 
             // Check if the player wants to jump
-            // ButtonEdge.Down means "is held" (continuous, for variable jump height)
-            isJumping = input.IsDown(Platformer2DProfile.Jump);
+            // Original game logic: isJumping is true whenever the jump button is down
+            // We need to use WasPressed for the initial trigger, then maintain state
+            // The DoJump method will handle when to actually apply jump velocity
+
+            // Set isJumping if button was just pressed, or keep it true if still held and we're jumping
+            if (input.WasPressed(Platformer2DProfile.Jump))
+            {
+                isJumping = true;
+            }
         }
 
         /// <summary>
