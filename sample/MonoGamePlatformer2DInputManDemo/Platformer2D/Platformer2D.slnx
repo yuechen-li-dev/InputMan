@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Platforms/">
+    <Project Path="Platformer2D.DesktopGL/Platformer2D.DesktopGL.csproj" />
+    <Project Path="Platformer2D.WindowsDX/Platformer2D.WindowsDX.csproj" />
+  </Folder>
+  <Project Path="Platformer2D.Core/Platformer2D.Core.csproj" />
+</Solution>
