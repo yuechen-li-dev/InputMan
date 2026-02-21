@@ -18,6 +18,10 @@ namespace Platformer2D.Core.Game.Player
         private const float GroundDragFactor = 0.48f;
         private const float AirDragFactor = 0.58f;
 
+        // Constants for vertical movement
+        private const float GravityAcceleration = 3400.0f;
+        private const float MaxFallSpeed = 550.0f;
+
         /// <summary>
         /// Populates the player's input fields for this frame.
         ///
@@ -51,6 +55,22 @@ namespace Platformer2D.Core.Game.Player
 
             // Clamp to max run speed.
             v.X = MathHelper.Clamp(v.X, -MaxMoveSpeed, MaxMoveSpeed);
+
+            player.Velocity = v;
+        }
+
+        public void ApplyVerticalPhysics(Player player, float elapsedSeconds, GameTime gameTime)
+        {
+            var v = player.Velocity;
+
+            // Gravity + clamp.
+            v.Y = MathHelper.Clamp(
+                v.Y + GravityAcceleration * elapsedSeconds,
+                -MaxFallSpeed,
+                MaxFallSpeed);
+
+            // Jump shaping stays in Player for now (we're just relocating where it's invoked).
+            v.Y = player.ApplyJumpInternal(v.Y, gameTime);
 
             player.Velocity = v;
         }

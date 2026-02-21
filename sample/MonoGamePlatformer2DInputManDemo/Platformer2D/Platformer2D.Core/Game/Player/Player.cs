@@ -44,6 +44,9 @@ namespace Platformer2D.Core.Game.Player
         internal void SetJumping(bool value) => isJumping = value;
         internal float GetMovement() => movement;
 
+        internal float ApplyJumpInternal(float currentVerticalVelocity, GameTime gameTime)
+    => DoJump(currentVerticalVelocity, gameTime);
+
         public Level Level
         {
             get { return level; }
@@ -73,17 +76,9 @@ namespace Platformer2D.Core.Game.Player
         }
         Vector2 velocity;
 
-        // Constants for controlling horizontal movement
-        private const float MoveAcceleration = 13000.0f;
-        private const float MaxMoveSpeed = 1750.0f;
-        private const float GroundDragFactor = 0.48f;
-        private const float AirDragFactor = 0.58f;
-
         // Constants for controlling vertical movement
         private const float MaxJumpTime = 0.35f;
         private const float JumpLaunchVelocity = -3500.0f;
-        private const float GravityAcceleration = 3400.0f;
-        private const float MaxFallSpeed = 550.0f;
         private const float JumpControlPower = 0.14f;
 
         /// <summary>
@@ -218,9 +213,8 @@ namespace Platformer2D.Core.Game.Player
             // Horizontal movement (acceleration, drag, clamp) lives in PlayerController now.
             controller.ApplyHorizontalPhysics(this, elapsed);
 
-            // Vertical movement stays here for now.
-            velocity.Y = MathHelper.Clamp(velocity.Y + GravityAcceleration * elapsed, -MaxFallSpeed, MaxFallSpeed);
-            velocity.Y = DoJump(velocity.Y, gameTime);
+            // Vertical movement also lives in PlayerController now.
+            controller.ApplyVerticalPhysics(this, elapsed, gameTime);
 
             // Apply velocity.
             Position += velocity * elapsed;
