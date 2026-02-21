@@ -1,5 +1,5 @@
 ﻿using InputMan.Core;
-
+using Microsoft.Xna.Framework;
 
 namespace Platformer2D.Core.Game.Player
 {
@@ -12,6 +12,12 @@ namespace Platformer2D.Core.Game.Player
     /// </summary>
     internal sealed class PlayerController
     {
+        // Constants for controlling horizontal movement (moved from Player.cs)
+        private const float MoveAcceleration = 13000.0f;
+        private const float MaxMoveSpeed = 1750.0f;
+        private const float GroundDragFactor = 0.48f;
+        private const float AirDragFactor = 0.58f;
+
         /// <summary>
         /// Populates the player's input fields for this frame.
         ///
@@ -21,14 +27,32 @@ namespace Platformer2D.Core.Game.Player
         /// </summary>
         public void UpdateInput(Player player, IInputMan input)
         {
-            // Horizontal movement.
             player.SetMovement(input.GetAxis(Platformer2DProfile.MoveX));
 
-            // Jump "pressed" edge.
             if (input.WasPressed(Platformer2DProfile.Jump))
             {
                 player.SetJumping(true);
             }
+        }
+
+        /// <summary>
+        /// Applies horizontal acceleration, drag, and max-speed clamping.
+        /// Vertical physics/jump stay in Player for now.
+        /// </summary>
+        public void ApplyHorizontalPhysics(Player player, float elapsedSeconds)
+        {
+            var v = player.Velocity;
+
+            // Acceleration from input.
+            v.X += player.GetMovement() * MoveAcceleration * elapsedSeconds;
+
+            // Apply pseudo-drag horizontally.
+            v.X *= player.IsOnGround ? GroundDragFactor : AirDragFactor;
+
+            // Clamp to max run speed.
+            v.X = MathHelper.Clamp(v.X, -MaxMoveSpeed, MaxMoveSpeed);
+
+            player.Velocity = v;
         }
     }
 }

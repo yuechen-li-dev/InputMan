@@ -42,6 +42,7 @@ namespace Platformer2D.Core.Game.Player
         // These are used by PlayerController to keep input logic out of Player.
         internal void SetMovement(float value) => movement = value;
         internal void SetJumping(bool value) => isJumping = value;
+        internal float GetMovement() => movement;
 
         public Level Level
         {
@@ -214,21 +215,12 @@ namespace Platformer2D.Core.Game.Player
 
             Vector2 previousPosition = Position;
 
-            // Base velocity is a combination of horizontal movement control and
-            // acceleration downward due to gravity.
-            velocity.X += movement * MoveAcceleration * elapsed;
+            // Horizontal movement (acceleration, drag, clamp) lives in PlayerController now.
+            controller.ApplyHorizontalPhysics(this, elapsed);
+
+            // Vertical movement stays here for now.
             velocity.Y = MathHelper.Clamp(velocity.Y + GravityAcceleration * elapsed, -MaxFallSpeed, MaxFallSpeed);
-
             velocity.Y = DoJump(velocity.Y, gameTime);
-
-            // Apply pseudo-drag horizontally.
-            if (IsOnGround)
-                velocity.X *= GroundDragFactor;
-            else
-                velocity.X *= AirDragFactor;
-
-            // Prevent the player from running faster than his top speed.            
-            velocity.X = MathHelper.Clamp(velocity.X, -MaxMoveSpeed, MaxMoveSpeed);
 
             // Apply velocity.
             Position += velocity * elapsed;
