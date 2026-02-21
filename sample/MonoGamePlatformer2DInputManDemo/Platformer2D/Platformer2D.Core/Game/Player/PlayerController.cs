@@ -76,7 +76,7 @@ namespace Platformer2D.Core.Game.Player
 
         // Jump tuning (moved from Player)
         private const float MaxJumpTime = 0.35f;
-        private const float JumpLaunchVelocity = -500.0f;
+        private const float JumpLaunchVelocity = -800.0f;
 
         // Jump state (moved from Player)
         private float jumpTime;
@@ -87,26 +87,29 @@ namespace Platformer2D.Core.Game.Player
             bool isJumping = player.GetIsJumping();
             float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            // 1. START JUMP: If we just pressed the button and are on the ground.
+            // 1. START JUMP: Just pressed and on ground
             if (isJumping && !wasJumping && player.IsOnGround)
             {
-                jumpTime = 0.01f; // Setting to a tiny value to flag that a jump is active
+                jumpTime = 0.01f;
                 player.PlayJumpSfx();
+                velocityY = JumpLaunchVelocity; // Initial burst
             }
-
-            // 2. CONTINUE JUMP: If the button is held and we haven't hit the time limit.
-            if (isJumping && jumpTime > 0.0f && jumpTime < MaxJumpTime)
+            // 2. CONTINUE JUMP: Button held within time limit
+            else if (isJumping && jumpTime > 0.0f && jumpTime < MaxJumpTime)
             {
                 jumpTime += elapsed;
                 player.PlayJumpAnimation();
 
-                // Simple linear jump: Apply a constant upward velocity while holding.
-                // This replaces the complex Math.Pow logic.
-                velocityY = JumpLaunchVelocity;
+                // PROGRESS: 0.0 at start, 1.0 at MaxJumpTime
+                float progress = jumpTime / MaxJumpTime;
+
+                // LINEAR DECAY: Velocity scales from -500 down toward 0.
+                // This removes the "snap" at the top of the jump.
+                velocityY = JumpLaunchVelocity * (1.0f - progress);
             }
+            // 3. STOP JUMP: Button released or time reached
             else
             {
-                // 3. STOP JUMP: If the button is released or we hit the max time.
                 jumpTime = 0.0f;
             }
 
