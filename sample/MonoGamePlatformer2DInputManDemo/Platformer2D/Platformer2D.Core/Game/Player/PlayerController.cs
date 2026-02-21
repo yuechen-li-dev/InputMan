@@ -1,5 +1,6 @@
 ﻿using InputMan.Core;
 using Microsoft.Xna.Framework;
+using System;
 
 namespace Platformer2D.Core.Game.Player
 {
@@ -63,16 +64,59 @@ namespace Platformer2D.Core.Game.Player
         {
             var v = player.Velocity;
 
-            // Gravity + clamp.
             v.Y = MathHelper.Clamp(
                 v.Y + GravityAcceleration * elapsedSeconds,
                 -MaxFallSpeed,
                 MaxFallSpeed);
 
-            // Jump shaping stays in Player for now (we're just relocating where it's invoked).
-            v.Y = player.ApplyJumpInternal(v.Y, gameTime);
+            v.Y = DoJump(player, v.Y, gameTime);
 
             player.Velocity = v;
+        }
+
+        // Jump tuning (moved from Player)
+        private const float MaxJumpTime = 0.35f;
+        private const float JumpLaunchVelocity = -3500.0f;
+        private const float JumpControlPower = 0.14f;
+
+        // Jump state (moved from Player)
+        private float jumpTime;
+        private bool wasJumping;
+
+        private float DoJump(Player player, float velocityY, GameTime gameTime)
+        {
+            // IMPORTANT: Keep this logic identical to your current Player.DoJump.
+            // The only differences should be:
+            // - read jump input via player.GetIsJumping()
+            // - read grounded/alive via player.IsOnGround / player.IsAlive
+            // - store jumpTime/wasJumping on the controller (fields above)
+
+            if (player.GetIsJumping())
+            {
+                if ((!wasJumping && player.IsOnGround) || jumpTime > 0.0f)
+                {
+                    if (jumpTime == 0.0f)
+                        player.PlayJumpSfx();
+                    jumpTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    player.PlayJumpAnimation();
+                }
+
+                if (0.0f < jumpTime && jumpTime <= MaxJumpTime)
+                {
+                    velocityY = JumpLaunchVelocity * (1.0f - (float)Math.Pow(jumpTime / MaxJumpTime, JumpControlPower));
+                }
+                else
+                {
+                    jumpTime = 0.0f;
+                }
+            }
+            else
+            {
+                jumpTime = 0.0f;
+            }
+
+            wasJumping = player.GetIsJumping();
+            return velocityY;
         }
     }
 }

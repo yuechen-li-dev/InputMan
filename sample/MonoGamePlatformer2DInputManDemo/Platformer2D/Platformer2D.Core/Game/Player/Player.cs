@@ -43,9 +43,9 @@ namespace Platformer2D.Core.Game.Player
         internal void SetMovement(float value) => movement = value;
         internal void SetJumping(bool value) => isJumping = value;
         internal float GetMovement() => movement;
-
-        internal float ApplyJumpInternal(float currentVerticalVelocity, GameTime gameTime)
-    => DoJump(currentVerticalVelocity, gameTime);
+        internal bool GetIsJumping() => isJumping;
+        internal void PlayJumpSfx() => jumpSound.Play();
+        internal void PlayJumpAnimation() => sprite.PlayAnimation(jumpAnimation);
 
         public Level Level
         {
@@ -76,11 +76,6 @@ namespace Platformer2D.Core.Game.Player
         }
         Vector2 velocity;
 
-        // Constants for controlling vertical movement
-        private const float MaxJumpTime = 0.35f;
-        private const float JumpLaunchVelocity = -3500.0f;
-        private const float JumpControlPower = 0.14f;
-
         /// <summary>
         /// Gets whether or not the player's feet are on the ground.
         /// </summary>
@@ -97,9 +92,6 @@ namespace Platformer2D.Core.Game.Player
 
         // Jumping state
         private bool isJumping;
-        private bool wasJumping;
-        private float jumpTime;
-
         private Rectangle localBounds;
         /// <summary>
         /// Gets a rectangle which bounds this player in world space.
@@ -229,60 +221,6 @@ namespace Platformer2D.Core.Game.Player
 
             if (Position.Y == previousPosition.Y)
                 velocity.Y = 0;
-        }
-
-        /// <summary>
-        /// Calculates the Y velocity accounting for jumping and
-        /// animates accordingly.
-        /// </summary>
-        /// <remarks>
-        /// During the accent of a jump, the Y velocity is completely
-        /// overridden by a power curve. During the decent, gravity takes
-        /// over. The jump velocity is controlled by the jumpTime field
-        /// which measures time into the accent of the current jump.
-        /// </remarks>
-        /// <param name="velocityY">
-        /// The player's current velocity along the Y axis.
-        /// </param>
-        /// <returns>
-        /// A new Y velocity if beginning or continuing a jump.
-        /// Otherwise, the existing Y velocity.
-        /// </returns>
-        private float DoJump(float velocityY, GameTime gameTime)
-        {
-            // If the player wants to jump
-            if (isJumping)
-            {
-                // Begin or continue a jump
-                if ((!wasJumping && IsOnGround) || jumpTime > 0.0f)
-                {
-                    if (jumpTime == 0.0f)
-                        jumpSound.Play();
-
-                    jumpTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    sprite.PlayAnimation(jumpAnimation);
-                }
-
-                // If we are in the ascent of the jump
-                if (0.0f < jumpTime && jumpTime <= MaxJumpTime)
-                {
-                    // Fully override the vertical velocity with a power curve that gives players more control over the top of the jump
-                    velocityY = JumpLaunchVelocity * (1.0f - (float)Math.Pow(jumpTime / MaxJumpTime, JumpControlPower));
-                }
-                else
-                {
-                    // Reached the apex of the jump
-                    jumpTime = 0.0f;
-                }
-            }
-            else
-            {
-                // Continues not jumping or cancels a jump in progress
-                jumpTime = 0.0f;
-            }
-            wasJumping = isJumping;
-
-            return velocityY;
         }
 
         /// <summary>
