@@ -20,6 +20,7 @@ public static class Platformer2DProfile
 {
     // Action IDs
     public static readonly ActionId Jump = new("Jump");
+    public static readonly ActionId RebindJump = new("RebindJump");
 
     // Axis IDs
     public static readonly AxisId MoveX = new("MoveX");
@@ -56,6 +57,10 @@ public static class Platformer2DProfile
                 // Jump (A button) - ButtonEdge.Down for variable jump height
                 Action(PadBtn(PlayerIndex.One, Buttons.A), Jump, ButtonEdge.Down,
                     name: "Jump.Pad.A"),
+                
+                // ==================== Rebinding Hotkey ====================
+                // Press J to start rebinding Jump
+                Action(K(Keys.J), RebindJump, ButtonEdge.Pressed, name: "RebindJump.Kb"),
             ]
         };
 

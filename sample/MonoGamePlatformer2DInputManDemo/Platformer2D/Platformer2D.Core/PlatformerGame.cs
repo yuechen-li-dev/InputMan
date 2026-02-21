@@ -14,10 +14,12 @@ using System.IO;
 using InputMan.Core;
 using InputMan.MonoGameConn;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
 using Microsoft.Xna.Framework.Media;
+using Platformer2D.Core;
 
 namespace Platformer2D
 {
@@ -50,6 +52,8 @@ namespace Platformer2D
 
         // InputMan - replaces manual input state polling
         private IInputMan inputMan;
+        private MonoGameProfileStorage storage; // Keep reference for rebinding
+        private RebindingUI rebindingUI;
 
         // Virtual gamepad for touch devices (kept for compatibility)
         private TouchCollection touchState;
@@ -83,7 +87,7 @@ namespace Platformer2D
         protected override void Initialize()
         {
             // Create profile storage
-            var storage = MonoGameProfileStorage.CreateDefault(
+            storage = MonoGameProfileStorage.CreateDefault(
                 appName: "Platformer2D",
                 defaultProfileFactory: Platformer2DProfile.Create);
 
@@ -121,6 +125,9 @@ namespace Platformer2D
 
             // Load fonts
             hudFont = Content.Load<SpriteFont>("Fonts/Hud");
+
+            // Create rebinding UI
+            rebindingUI = new RebindingUI(inputMan, storage, hudFont);
 
             // Load overlay textures
             winOverlay = Content.Load<Texture2D>("Overlays/you_win");
@@ -177,6 +184,9 @@ namespace Platformer2D
 
             // Handle high-level input (menus, continue, etc.)
             HandleInput(gameTime);
+
+            // Update rebinding UI
+            rebindingUI?.Update();
 
             // Update our level, passing down InputMan
             // InputMan automatically polls and processes all input
@@ -263,6 +273,9 @@ namespace Platformer2D
             level.Draw(gameTime, spriteBatch);
 
             DrawHud();
+
+            // Draw rebinding UI on top
+            rebindingUI?.Draw(spriteBatch, baseScreenSize);
 
             spriteBatch.End();
 
