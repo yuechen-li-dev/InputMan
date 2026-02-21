@@ -384,4 +384,144 @@ public class MonoGameConnSanityTests
     }
 
     #endregion
+
+    #region IsDown
+    /// <summary>
+    /// Add this test to MonoGameConnSanityTests.cs to diagnose the jump issue.
+    /// </summary>
+    [Fact]
+    public void Diagnostic_JumpAction_IsDown_WorksCorrectly()
+    {
+        // Arrange - Create profile with jump action
+        var jumpAction = new ActionId("Jump");
+        var spaceKey = MonoGameKeys.K(Keys.Space);
+
+        var profile = new InputProfile
+        {
+            Maps = new Dictionary<string, ActionMapDefinition>
+            {
+                ["Test"] = new ActionMapDefinition
+                {
+                    Id = new ActionMapId("Test"),
+                    Priority = 10,
+                    Bindings =
+                    [
+                        // Jump with ButtonEdge.Down (like in Platformer2D)
+                        new Binding
+                    {
+                        Name = "Jump.Test",
+                        Trigger = new BindingTrigger
+                        {
+                            Control = spaceKey,
+                            Type = TriggerType.Button,
+                            ButtonEdge = ButtonEdge.Down
+                        },
+                        Output = new ActionOutput(jumpAction)
+                    }
+                    ]
+                }
+            }
+        };
+
+        var engine = new InputManEngine(profile);
+        engine.SetMaps(new ActionMapId("Test"));
+
+        // Act - Frame 1: Press Space
+        var snapshot1 = new InputSnapshot(
+            buttons: new Dictionary<ControlKey, bool> { [spaceKey] = true },
+            axes: new Dictionary<ControlKey, float>());
+
+        engine.Tick(snapshot1, 0.016f, 0.016f);
+
+        // Assert - Frame 1
+        Assert.True(engine.WasPressed(jumpAction), "WasPressed should be true on first frame");
+        Assert.True(engine.IsDown(jumpAction), "IsDown should be true on first frame");
+
+        // Act - Frame 2: Hold Space
+        var snapshot2 = new InputSnapshot(
+            buttons: new Dictionary<ControlKey, bool> { [spaceKey] = true },
+            axes: new Dictionary<ControlKey, float>());
+
+        engine.Tick(snapshot2, 0.016f, 0.032f);
+
+        // Assert - Frame 2
+        Assert.False(engine.WasPressed(jumpAction), "WasPressed should be false on second frame");
+        Assert.True(engine.IsDown(jumpAction), "IsDown should STILL be true while held");
+
+        // Act - Frame 3: Release Space
+        var snapshot3 = new InputSnapshot(
+            buttons: new Dictionary<ControlKey, bool> { [spaceKey] = false },
+            axes: new Dictionary<ControlKey, float>());
+
+        engine.Tick(snapshot3, 0.016f, 0.048f);
+
+        // Assert - Frame 3
+        Assert.False(engine.IsDown(jumpAction), "IsDown should be false after release");
+        Assert.True(engine.WasReleased(jumpAction), "WasReleased should be true on release frame");
+    }
+
+    [Fact]
+    public void Diagnostic_JumpAction_Pressed_EdgeBehavior()
+    {
+        // This test checks if ButtonEdge.Pressed works differently
+        var jumpAction = new ActionId("Jump");
+        var spaceKey = MonoGameKeys.K(Keys.Space);
+
+        var profile = new InputProfile
+        {
+            Maps = new Dictionary<string, ActionMapDefinition>
+            {
+                ["Test"] = new ActionMapDefinition
+                {
+                    Id = new ActionMapId("Test"),
+                    Priority = 10,
+                    Bindings =
+                    [
+                        // Jump with ButtonEdge.Pressed (fires once)
+                        new Binding
+                    {
+                        Name = "Jump.Test",
+                        Trigger = new BindingTrigger
+                        {
+                            Control = spaceKey,
+                            Type = TriggerType.Button,
+                            ButtonEdge = ButtonEdge.Pressed
+                        },
+                        Output = new ActionOutput(jumpAction)
+                    }
+                    ]
+                }
+            }
+        };
+
+        var engine = new InputManEngine(profile);
+        engine.SetMaps(new ActionMapId("Test"));
+
+        // Frame 1: Press Space
+        var snapshot1 = new InputSnapshot(
+            buttons: new Dictionary<ControlKey, bool> { [spaceKey] = true },
+            axes: new Dictionary<ControlKey, float>());
+
+        engine.Tick(snapshot1, 0.016f, 0.016f);
+
+        // With ButtonEdge.Pressed, what happens?
+        Assert.True(engine.WasPressed(jumpAction), "WasPressed should be true");
+        var isDownPressed = engine.IsDown(jumpAction);
+
+        // Frame 2: Hold Space
+        var snapshot2 = new InputSnapshot(
+            buttons: new Dictionary<ControlKey, bool> { [spaceKey] = true },
+            axes: new Dictionary<ControlKey, float>());
+
+        engine.Tick(snapshot2, 0.016f, 0.032f);
+
+        // With ButtonEdge.Pressed, it should NOT fire again
+        Assert.False(engine.WasPressed(jumpAction), "WasPressed should be false on hold");
+        var isDownHeld = engine.IsDown(jumpAction);
+
+        // Output diagnostics
+        System.Diagnostics.Debug.WriteLine($"ButtonEdge.Pressed - IsDown on press: {isDownPressed}");
+        System.Diagnostics.Debug.WriteLine($"ButtonEdge.Pressed - IsDown on hold: {isDownHeld}");
+    }
+    #endregion
 }
