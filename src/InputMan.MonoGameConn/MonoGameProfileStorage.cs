@@ -1,5 +1,7 @@
 using InputMan.Core;
 using InputMan.Core.Serialization;
+using System;
+using System.IO;
 
 namespace InputMan.MonoGameConn;
 
@@ -51,6 +53,11 @@ public sealed class MonoGameProfileStorage : IProfileStorage
 
     public InputProfile LoadProfile()
     {
+#if DEBUG
+        // In debug builds, always use code-defined profile to avoid stale cached profiles during development
+        System.Diagnostics.Debug.WriteLine("DEBUG MODE: Loading profile from code (skipping disk)");
+        return _defaultProfileFactory();
+#else
         // Priority 1: User profile (contains rebinds)
         if (File.Exists(_userProfilePath))
         {
@@ -85,6 +92,7 @@ public sealed class MonoGameProfileStorage : IProfileStorage
 
         // Priority 3: Code-defined default
         return _defaultProfileFactory();
+#endif
     }
 
     public void SaveProfile(InputProfile profile)
@@ -117,7 +125,6 @@ public sealed class MonoGameProfileStorage : IProfileStorage
             SaveProfile(profile);
         }
     }
-
     public bool ProfileExists()
     {
         return File.Exists(_userProfilePath);
