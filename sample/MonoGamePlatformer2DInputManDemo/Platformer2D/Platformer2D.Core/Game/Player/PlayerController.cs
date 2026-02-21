@@ -14,10 +14,10 @@ namespace Platformer2D.Core.Game.Player
     internal sealed class PlayerController
     {
         // Constants for controlling horizontal movement (moved from Player.cs)
-        private const float MoveAcceleration = 13000.0f;
+        private const float MoveAcceleration = 9000.0f;
         private const float MaxMoveSpeed = 1750.0f;
-        private const float GroundDragFactor = 0.48f;
-        private const float AirDragFactor = 0.58f;
+        private const float GroundDragFactor = 0.7f;
+        private const float AirDragFactor = 0.7f;
 
         // Constants for vertical movement
         private const float GravityAcceleration = 3400.0f;
@@ -75,8 +75,8 @@ namespace Platformer2D.Core.Game.Player
         }
 
         // Jump tuning (moved from Player)
-        private const float MaxJumpTime = 0.35f;
-        private const float JumpLaunchVelocity = -800.0f;
+        private const float MaxJumpTime = 0.45f;
+        private const float JumpLaunchVelocity = -600.0f;
 
         // Jump state (moved from Player)
         private float jumpTime;
@@ -115,6 +115,10 @@ namespace Platformer2D.Core.Game.Player
 
             wasJumping = isJumping;
             return velocityY;
+        }
+        public void StopJump()
+        {
+            jumpTime = 0.0f;
         }
     }
 }

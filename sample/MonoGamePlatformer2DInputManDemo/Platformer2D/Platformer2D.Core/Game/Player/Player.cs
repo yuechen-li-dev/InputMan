@@ -237,7 +237,7 @@ namespace Platformer2D.Core.Game.Player
             int topTile = (int)Math.Floor((float)bounds.Top / Tile.Height);
             int bottomTile = (int)Math.Ceiling(((float)bounds.Bottom / Tile.Height)) - 1;
 
-            isOnGround = false;
+                isOnGround = false;
 
             for (int y = topTile; y <= bottomTile; ++y)
             {
