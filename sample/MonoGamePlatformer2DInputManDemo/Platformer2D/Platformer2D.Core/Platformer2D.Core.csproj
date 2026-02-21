@@ -8,4 +8,8 @@
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\InputMan.Core\InputMan.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\src\InputMan.MonoGameConn\InputMan.MonoGameConn.csproj" />
+  </ItemGroup>
 </Project>

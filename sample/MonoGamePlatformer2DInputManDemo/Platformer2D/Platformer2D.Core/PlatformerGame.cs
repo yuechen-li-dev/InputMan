@@ -4,13 +4,16 @@
 //
 // Microsoft XNA Community Game Platform
 // Copyright (C) Microsoft Corporation. All rights reserved.
+//
+// REFACTORED: Now uses InputMan for input management
 //-----------------------------------------------------------------------------
 #endregion
 
 using System;
 using System.IO;
+using InputMan.Core;
+using InputMan.MonoGameConn;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
@@ -45,13 +48,11 @@ namespace Platformer2D
         // When the time remaining is less than the warning time, it blinks on the hud
         private static readonly TimeSpan WarningTime = TimeSpan.FromSeconds(30);
 
-        // We store our input states so that we only poll once per frame, 
-        // then we use the same input state wherever needed
-        private GamePadState gamePadState;
-        private KeyboardState keyboardState;
-        private TouchCollection touchState;
-        private AccelerometerState accelerometerState;
+        // InputMan - replaces manual input state polling
+        private IInputMan inputMan;
 
+        // Virtual gamepad for touch devices (kept for compatibility)
+        private TouchCollection touchState;
         private VirtualGamePad virtualGamePad;
 
         // The number of levels in the Levels directory of our content. We assume that
@@ -74,6 +75,37 @@ namespace Platformer2D
             graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
 
             Accelerometer.Initialize();
+        }
+
+        /// <summary>
+        /// Initialize InputMan before content loading.
+        /// </summary>
+        protected override void Initialize()
+        {
+            // Create profile storage
+            var storage = MonoGameProfileStorage.CreateDefault(
+                appName: "Platformer2D",
+                defaultProfileFactory: Platformer2DProfile.Create);
+
+            // Ensure user profile exists (creates default if missing)
+            storage.EnsureUserProfileExists();
+
+            // Load profile (user > bundled > code default)
+            var profile = storage.LoadProfile();
+
+            // Create and add InputMan system
+            var inputSystem = new MonoGameInputManSystem(
+                this,
+                profile,
+                new ActionMapId("Gameplay")); // Activate gameplay map
+
+            inputSystem.UpdateOrder = -1; // Update before game logic
+            Components.Add(inputSystem);
+
+            // Get IInputMan interface
+            inputMan = inputSystem.InputMan;
+
+            base.Initialize();
         }
 
         /// <summary>
@@ -103,7 +135,7 @@ namespace Platformer2D
             {
                 //Known issue that you get exceptions if you use Media PLayer while connected to your PC
                 //See http://social.msdn.microsoft.com/Forums/en/windowsphone7series/thread/c8a243d2-d360-46b1-96bd-62b1ef268c66
-                //Which means its impossible to test this from VS.
+                //Which means its impossible to test from VS.
                 //So we have to catch the exception and throw it away
                 try
                 {
@@ -128,7 +160,7 @@ namespace Platformer2D
             System.Diagnostics.Debug.WriteLine("Screen Size - Width[" + GraphicsDevice.PresentationParameters.BackBufferWidth + "] Height [" + GraphicsDevice.PresentationParameters.BackBufferHeight + "]");
         }
 
-        
+
         /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
@@ -142,12 +174,13 @@ namespace Platformer2D
             {
                 ScalePresentationArea();
             }
-            // Handle polling for our input and handling high-level input
+
+            // Handle high-level input (menus, continue, etc.)
             HandleInput(gameTime);
 
-            // update our level, passing down the GameTime along with all of our input states
-            level.Update(gameTime, keyboardState, gamePadState, 
-                         accelerometerState, Window.CurrentOrientation);
+            // Update our level, passing down InputMan
+            // InputMan automatically polls and processes all input
+            level.Update(gameTime, inputMan);
 
             if (level.Player.Velocity != Vector2.Zero)
                 virtualGamePad.NotifyPlayerIsMoving();
@@ -157,23 +190,22 @@ namespace Platformer2D
 
         private void HandleInput(GameTime gameTime)
         {
-            // get all of our input states
-            keyboardState = Keyboard.GetState();
+            // Get touch state for virtual gamepad (mobile compatibility)
             touchState = TouchPanel.GetState();
-            gamePadState = virtualGamePad.GetState(touchState, GamePad.GetState(PlayerIndex.One));
-            accelerometerState = Accelerometer.GetState();
+
+            // Update virtual gamepad state (integrates with InputMan)
+            var virtualPadState = virtualGamePad.GetState(touchState, GamePad.GetState(PlayerIndex.One));
 
             if (!OperatingSystem.IsIOS())
             {
-                // Exit the game when back is pressed.
-                if (gamePadState.Buttons.Back == ButtonState.Pressed)
+                // Exit the game when back is pressed (gamepad back button)
+                if (virtualPadState.Buttons.Back == ButtonState.Pressed)
                     Exit();
             }
 
-            bool continuePressed =
-                keyboardState.IsKeyDown(Keys.Space) ||
-                gamePadState.IsButtonDown(Buttons.A) ||
-                touchState.AnyTouch();
+            // Check for continue/restart input
+            // Use InputMan for jump action (which is bound to Space/A)
+            bool continuePressed = inputMan.IsDown(Platformer2DProfile.Jump) || touchState.AnyTouch();
 
             // Perform the appropriate action to advance the game and
             // to get the player back to playing.
@@ -226,7 +258,7 @@ namespace Platformer2D
         {
             graphics.GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null,null, globalTransformation);
+            spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, null, globalTransformation);
 
             level.Draw(gameTime, spriteBatch);
 
@@ -265,7 +297,7 @@ namespace Platformer2D
             // Draw score
             float timeHeight = hudFont.MeasureString(timeString).Y;
             DrawShadowedString(hudFont, "SCORE: " + level.Score.ToString(), hudLocation + new Vector2(0.0f, timeHeight * 1.2f), Color.Yellow);
-           
+
             // Determine the status overlay message to show.
             Texture2D status = null;
             if (level.TimeRemaining == TimeSpan.Zero)

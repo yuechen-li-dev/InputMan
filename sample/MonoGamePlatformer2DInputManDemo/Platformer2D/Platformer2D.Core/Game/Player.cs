@@ -4,14 +4,16 @@
 //
 // Microsoft XNA Community Game Platform
 // Copyright (C) Microsoft Corporation. All rights reserved.
+//
+// REFACTORED: Now uses InputMan for input management
 //-----------------------------------------------------------------------------
 #endregion
 
 using System;
+using InputMan.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Platformer2D
 {
@@ -74,12 +76,7 @@ namespace Platformer2D
         private const float JumpLaunchVelocity = -3500.0f;
         private const float GravityAcceleration = 3400.0f;
         private const float MaxFallSpeed = 550.0f;
-        private const float JumpControlPower = 0.14f; 
-
-        // Input configuration
-        private const float MoveStickScale = 1.0f;
-        private const float AccelerometerScale = 1.5f;
-        private const Buttons JumpButton = Buttons.A;
+        private const float JumpControlPower = 0.14f;
 
         /// <summary>
         /// Gets whether or not the player's feet are on the ground.
@@ -166,20 +163,11 @@ namespace Platformer2D
 
         /// <summary>
         /// Handles input, performs physics, and animates the player sprite.
+        /// NOW USES INPUTMAN - no more raw input state parameters!
         /// </summary>
-        /// <remarks>
-        /// We pass in all of the input states so that our game is only polling the hardware
-        /// once per frame. We also pass the game's orientation because when using the accelerometer,
-        /// we need to reverse our motion when the orientation is in the LandscapeRight orientation.
-        /// </remarks>
-        public void Update(
-            GameTime gameTime, 
-            KeyboardState keyboardState, 
-            GamePadState gamePadState, 
-            AccelerometerState accelState,
-            DisplayOrientation orientation)
+        public void Update(GameTime gameTime, IInputMan input)
         {
-            GetInput(keyboardState, gamePadState, accelState, orientation);
+            GetInput(input);
 
             ApplyPhysics(gameTime);
 
@@ -201,52 +189,18 @@ namespace Platformer2D
         }
 
         /// <summary>
-        /// Gets player horizontal movement and jump commands from input.
+        /// Gets player horizontal movement and jump commands from InputMan.
+        /// REFACTORED: Now uses InputMan instead of raw MonoGame input states.
         /// </summary>
-        private void GetInput(
-            KeyboardState keyboardState, 
-            GamePadState gamePadState,
-            AccelerometerState accelState, 
-            DisplayOrientation orientation)
+        private void GetInput(IInputMan input)
         {
-            // Get analog horizontal movement.
-            movement = gamePadState.ThumbSticks.Left.X * MoveStickScale;
+            // Get horizontal movement from InputMan
+            // This automatically combines keyboard (WASD/Arrows) and gamepad stick
+            movement = input.GetAxis(Platformer2DProfile.MoveX);
 
-            // Ignore small movements to prevent running in place.
-            if (Math.Abs(movement) < 0.5f)
-                movement = 0.0f;
-
-            // Move the player with accelerometer
-            if (Math.Abs(accelState.Acceleration.Y) > 0.10f)
-            {
-                // set our movement speed
-                movement = MathHelper.Clamp(-accelState.Acceleration.Y * AccelerometerScale, -1f, 1f);
-
-                // if we're in the LandscapeLeft orientation, we must reverse our movement
-                if (orientation == DisplayOrientation.LandscapeRight)
-                    movement = -movement;
-            }
-
-            // If any digital horizontal movement input is found, override the analog movement.
-            if (gamePadState.IsButtonDown(Buttons.DPadLeft) ||
-                keyboardState.IsKeyDown(Keys.Left) ||
-                keyboardState.IsKeyDown(Keys.A))
-            {
-                movement = -1.0f;
-            }
-            else if (gamePadState.IsButtonDown(Buttons.DPadRight) ||
-                     keyboardState.IsKeyDown(Keys.Right) ||
-                     keyboardState.IsKeyDown(Keys.D))
-            {
-                movement = 1.0f;
-            }
-
-            // Check if the player wants to jump.
-            isJumping =
-                gamePadState.IsButtonDown(JumpButton) ||
-                keyboardState.IsKeyDown(Keys.Space) ||
-                keyboardState.IsKeyDown(Keys.Up) ||
-                keyboardState.IsKeyDown(Keys.W);
+            // Check if the player wants to jump
+            // ButtonEdge.Down means "is held" (continuous, for variable jump height)
+            isJumping = input.IsDown(Platformer2DProfile.Jump);
         }
 
         /// <summary>

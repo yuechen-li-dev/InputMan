@@ -7,14 +7,14 @@
 //-----------------------------------------------------------------------------
 #endregion
 
-using System;
-using System.Collections.Generic;
+using InputMan.Core;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Audio;
+using System;
+using System.Collections.Generic;
 using System.IO;
-using Microsoft.Xna.Framework.Input;
 
 namespace Platformer2D
 {
@@ -371,12 +371,7 @@ namespace Platformer2D
         /// Updates all objects in the world, performs collision between them,
         /// and handles the time limit with scoring.
         /// </summary>
-        public void Update(
-            GameTime gameTime, 
-            KeyboardState keyboardState, 
-            GamePadState gamePadState, 
-            AccelerometerState accelState,
-            DisplayOrientation orientation)
+        public void Update(GameTime gameTime, IInputMan input)
         {
             // Pause while the player is dead or time is expired.
             if (!Player.IsAlive || TimeRemaining == TimeSpan.Zero)
@@ -395,7 +390,10 @@ namespace Platformer2D
             else
             {
                 timeRemaining -= gameTime.ElapsedGameTime;
-                Player.Update(gameTime, keyboardState, gamePadState, accelState, orientation);
+
+                // REFACTORED: Pass the InputMan instance to the player
+                Player.Update(gameTime, input);
+
                 UpdateGems(gameTime);
 
                 // Falling off the bottom of the level kills the player.
@@ -405,8 +403,7 @@ namespace Platformer2D
                 UpdateEnemies(gameTime);
 
                 // The player has reached the exit if they are standing on the ground and
-                // his bounding rectangle contains the center of the exit tile. They can only
-                // exit when they have collected all of the gems.
+                // his bounding rectangle contains the center of the exit tile.
                 if (Player.IsAlive &&
                     Player.IsOnGround &&
                     Player.BoundingRectangle.Contains(exit))
