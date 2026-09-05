@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>InputMan.Toml</PackageId>
+    <Version>0.2.0</Version>
+    <Description>Deterministic human-editable TOML persistence for InputMan profiles.</Description>
+    <Authors>Yuechen Li</Authors>
+    <PackageTags>input;game;toml;rebinding;controls;gamedev</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/yuechen-li-dev/InputMan</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/yuechen-li-dev/InputMan</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../InputMan.Core/InputMan.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
+    <None Include="../../LICENSE.txt" Pack="true" PackagePath="\" Condition="Exists('../../LICENSE.txt')" />
+  </ItemGroup>
+</Project>

@@ -11,7 +11,7 @@ public static class StrideKeys
 {
     // Keyboard + mouse buttons use Stride enum values directly.
     public static ControlKey K(Keys key) => new(DeviceKind.Keyboard, 0, (int)key);
-    public static ControlKey M(MouseButton btn) => new(DeviceKind.Mouse, 0, (int)btn);
+    public static ControlKey M(Stride.Input.MouseButton btn) => new(DeviceKind.Mouse, 0, (int)btn);
 
     // Gamepad buttons use Stride enum values directly.
     public static ControlKey PadBtn(byte index, GamePadButton btn) => new(DeviceKind.Gamepad, index, (int)btn);

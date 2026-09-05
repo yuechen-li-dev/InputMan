@@ -27,11 +27,11 @@ public static class StrideCandidateButtons
     {
         return
         [
-            new(DeviceKind.Mouse, 0, (int)MouseButton.Left),
-            new(DeviceKind.Mouse, 0, (int)MouseButton.Right),
-            new(DeviceKind.Mouse, 0, (int)MouseButton.Middle),
-            new(DeviceKind.Mouse, 0, (int)MouseButton.Extended1),
-            new(DeviceKind.Mouse, 0, (int)MouseButton.Extended2),
+            new(DeviceKind.Mouse, 0, (int)Stride.Input.MouseButton.Left),
+            new(DeviceKind.Mouse, 0, (int)Stride.Input.MouseButton.Right),
+            new(DeviceKind.Mouse, 0, (int)Stride.Input.MouseButton.Middle),
+            new(DeviceKind.Mouse, 0, (int)Stride.Input.MouseButton.Extended1),
+            new(DeviceKind.Mouse, 0, (int)Stride.Input.MouseButton.Extended2),
         ];
     }
 

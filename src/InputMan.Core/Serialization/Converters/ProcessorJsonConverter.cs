@@ -17,6 +17,8 @@ public sealed class ProcessorJsonConverter : JsonConverter<IProcessor>
 
         string? kind = null;
         float? value = null;
+        float? minimum = null;
+        float? maximum = null;
 
         while (reader.Read())
         {
@@ -48,6 +50,16 @@ public sealed class ProcessorJsonConverter : JsonConverter<IProcessor>
                     value = ReadFloat(ref reader);
                     break;
 
+                case "minimum":
+                case "Minimum":
+                    minimum = ReadFloat(ref reader);
+                    break;
+
+                case "maximum":
+                case "Maximum":
+                    maximum = ReadFloat(ref reader);
+                    break;
+
                 default:
                     // Forward-compatible: ignore unknown fields
                     reader.Skip();
@@ -63,7 +75,8 @@ public sealed class ProcessorJsonConverter : JsonConverter<IProcessor>
             "deadzone" => CreateDeadzone(value),
             "scale" => CreateScale(value),
             "invert" => new InvertProcessor(),
-            _ => throw new JsonException($"Unknown IProcessor.kind '{kind}'. Supported: 'Deadzone', 'Scale', 'Invert'.")
+            "clamp" => new ClampProcessor(minimum ?? -1f, maximum ?? 1f),
+            _ => throw new JsonException($"Unknown IProcessor.kind '{kind}'. Supported: 'Deadzone', 'Scale', 'Invert', 'Clamp'.")
         };
     }
 
@@ -85,6 +98,12 @@ public sealed class ProcessorJsonConverter : JsonConverter<IProcessor>
 
             case InvertProcessor:
                 writer.WriteString("kind", "Invert");
+                break;
+
+            case ClampProcessor clamp:
+                writer.WriteString("kind", "Clamp");
+                writer.WriteNumber("minimum", clamp.Minimum);
+                writer.WriteNumber("maximum", clamp.Maximum);
                 break;
 
             default:

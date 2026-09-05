@@ -144,7 +144,7 @@ public static class InputProfileValidator
         switch (t.Type)
         {
             case TriggerType.Button:
-                
+
                 // Valid: ActionOutput (normal action buttons)
                 // Valid: AxisOutput (ButtonAxis: buttons contribute to an axis while held)
                 if (output is not ActionOutput && output is not AxisOutput)
@@ -152,7 +152,7 @@ public static class InputProfileValidator
                         $"Binding \"{bindingName}\" is TriggerType.Button but Output is {output.GetType().Name}. " +
                         $"Expected ActionOutput or AxisOutput (ButtonAxis).");
                 break;
-                
+
 
             case TriggerType.Axis:
             case TriggerType.DeltaAxis:

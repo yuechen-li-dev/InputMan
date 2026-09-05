@@ -208,7 +208,7 @@ public class MonoGameConnSanityTests
 
         // Act - First frame (mouse moved)
         var snapshot1 = MonoGameInputSnapshotBuilder.Build(watchedButtons, watchedAxes, ref prevMouse);
-        
+
         // Current mouse state will be different from 100,100 in actual run
         // But we can verify the key exists in the snapshot
         Assert.True(snapshot1.Axes.ContainsKey(MonoGameKeys.MouseDeltaX));

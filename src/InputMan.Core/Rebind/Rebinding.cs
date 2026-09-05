@@ -1,8 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices.Marshalling;
 
 namespace InputMan.Core.Rebind;
+
+public enum RebindConflictPolicy
+{
+    Allow,
+    Reject,
+    ReplaceExisting,
+}
 
 public sealed class RebindRequest
 {
@@ -45,6 +51,9 @@ public sealed class RebindRequest
 
     /// <summary>Reject binding to a control already used by another binding in ANY map (stricter).</summary>
     public bool DisallowConflictsAcrossAllMaps { get; set; } = false;
+
+    /// <summary>Explicit conflict behavior. Legacy disallow flags define the checked scope.</summary>
+    public RebindConflictPolicy ConflictPolicy { get; set; } = RebindConflictPolicy.Reject;
 }
 
 public readonly record struct RebindProgress(string Message, float SecondsRemaining);
@@ -143,7 +152,7 @@ internal sealed class RebindSession(
             return;
         }
 
-        OnProgress?.Invoke(new RebindProgress("Waiting for input…", remaining));
+        OnProgress?.Invoke(new RebindProgress("Waiting for inputï¿½", remaining));
 
         // Seed state once so held keys don't instantly bind
         if (!_seeded)
@@ -305,8 +314,8 @@ internal sealed class RebindSession(
             return;
         }
 
-        // FIX: Check conflicts using the LIVE profile state from engine, not stale snapshot
-        if (_request.DisallowConflictsInSameMap && IsConflictInSameMap(newControl))
+        List<(ActionMapDefinition Map, int Index)> conflicts = FindConflicts(newControl);
+        if (_request.ConflictPolicy == RebindConflictPolicy.Reject && conflicts.Count > 0)
         {
             Complete(new RebindResult
             {
@@ -316,35 +325,22 @@ internal sealed class RebindSession(
             return;
         }
 
-        // NEW: Option to check conflicts across ALL maps
-        if (_request.DisallowConflictsAcrossAllMaps && IsConflictAcrossAllMaps(newControl))
+        if (_request.ConflictPolicy == RebindConflictPolicy.ReplaceExisting)
         {
-            Complete(new RebindResult
+            foreach ((ActionMapDefinition conflictMap, int conflictIndex) in conflicts)
             {
-                Succeeded = false,
-                Error = "That control is already bound in another map."
-            });
-            return;
+                Binding conflict = conflictMap.Bindings[conflictIndex];
+                conflictMap.Bindings[conflictIndex] = CopyWithControl(
+                    conflict,
+                    _originalBinding.Trigger.Control,
+                    conflict.Trigger.Modifiers);
+            }
         }
 
         // Replace Binding because Binding/Trigger are init-only
         var old = _originalBinding;
 
-        var newBinding = new Binding
-        {
-            Name = old.Name,
-            Trigger = new BindingTrigger
-            {
-                Control = newControl,
-                Type = old.Trigger.Type,
-                ButtonEdge = old.Trigger.ButtonEdge,
-                Threshold = old.Trigger.Threshold,
-                Modifiers = modifiers,
-            },
-            Output = old.Output,
-            Consume = old.Consume,
-            Processors = old.Processors,
-        };
+        Binding newBinding = CopyWithControl(old, newControl, modifiers);
 
         _mapDef.Bindings[_bindingIndex] = newBinding;
 
@@ -368,57 +364,48 @@ internal sealed class RebindSession(
     /// Check if control conflicts with another binding IN THE SAME MAP.
     /// Now queries the engine's live profile instead of using stale binding list.
     /// </summary>
-    private bool IsConflictInSameMap(ControlKey key)
-    {
-        // Get the current live profile from engine
-        var profile = _engine.GetCurrentProfile();
-
-        // Find our map in the live profile
-        if (!profile.Maps.TryGetValue(_mapDef.Id.Name, out var liveMapDef))
-            return false; // Map not found (shouldn't happen)
-
-        // Check all bindings in this map
-        for (int i = 0; i < liveMapDef.Bindings.Count; i++)
-        {
-            // Skip the binding we're currently rebinding
-            if (i == _bindingIndex)
-                continue;
-
-            var binding = liveMapDef.Bindings[i];
-
-            // Check if this binding uses the same control
-            if (binding.Trigger.Control.Equals(key))
-                return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Check if control conflicts with ANY binding across ALL maps in the profile.
-    /// </summary>
-    private bool IsConflictAcrossAllMaps(ControlKey key)
+    private List<(ActionMapDefinition Map, int Index)> FindConflicts(ControlKey key)
     {
         var profile = _engine.GetCurrentProfile();
+        var result = new List<(ActionMapDefinition Map, int Index)>();
 
         foreach (var mapKvp in profile.Maps)
         {
             var mapDef = mapKvp.Value;
+            bool inspectMap = mapDef.Id.Equals(_mapDef.Id) || _request.DisallowConflictsAcrossAllMaps;
+            if (!inspectMap || (!_request.DisallowConflictsInSameMap && !_request.DisallowConflictsAcrossAllMaps))
+            {
+                continue;
+            }
 
-            // Check all bindings in this map
             for (int i = 0; i < mapDef.Bindings.Count; i++)
             {
-                // If we're checking the same map, skip the binding we're rebinding
                 if (mapDef.Id.Equals(_mapDef.Id) && i == _bindingIndex)
                     continue;
-
-                var binding = mapDef.Bindings[i];
-
-                if (binding.Trigger.Control.Equals(key))
-                    return true;
+                if (mapDef.Bindings[i].Trigger.Control.Equals(key))
+                    result.Add((mapDef, i));
             }
         }
 
-        return false;
+        return result;
+    }
+
+    private static Binding CopyWithControl(Binding source, ControlKey control, ControlKey[] modifiers)
+    {
+        return new Binding
+        {
+            Name = source.Name,
+            Trigger = new BindingTrigger
+            {
+                Control = control,
+                Type = source.Trigger.Type,
+                ButtonEdge = source.Trigger.ButtonEdge,
+                Threshold = source.Trigger.Threshold,
+                Modifiers = modifiers,
+            },
+            Output = source.Output,
+            Consume = source.Consume,
+            Processors = source.Processors,
+        };
     }
 }

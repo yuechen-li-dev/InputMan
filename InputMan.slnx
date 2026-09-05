@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="src/InputMan.Core/InputMan.Core.csproj" />
+  <Project Path="src/InputMan.Toml/InputMan.Toml.csproj" />
   <Project Path="src/InputMan.MonoGameConn/InputMan.MonoGameConn.csproj" Id="ab01580d-0032-4f38-98e4-bb1cff0b2745" />
   <Project Path="src/Inputman.StrideConn/Inputman.StrideConn.csproj" />
   <Project Path="tests/InputMan.Core.Tests/InputMan.Core.Tests.csproj" />

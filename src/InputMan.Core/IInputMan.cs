@@ -32,6 +32,12 @@ public interface IInputMan
     /// </remarks>
     float DeltaTimeSeconds { get; }
 
+    /// <summary>Gets an immutable logical snapshot of the most recently evaluated frame.</summary>
+    InputFrame CurrentFrame { get; }
+
+    /// <summary>Clears physical history and emits releases for held logical actions.</summary>
+    void ResetOnFocusLoss();
+
     /// <summary>
     /// Checks if an action is currently held down.
     /// </summary>

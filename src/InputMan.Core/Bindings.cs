@@ -190,3 +190,17 @@ public sealed record DeadzoneProcessor(float Deadzone) : IProcessor
         return sign * remapped;
     }
 }
+
+/// <summary>Constrains a processed value to a deterministic inclusive range.</summary>
+public sealed record ClampProcessor(float Minimum = -1f, float Maximum = 1f) : IProcessor
+{
+    public float Process(float value)
+    {
+        if (Minimum > Maximum)
+        {
+            throw new InvalidOperationException("Clamp minimum must not exceed maximum.");
+        }
+
+        return Math.Clamp(value, Minimum, Maximum);
+    }
+}

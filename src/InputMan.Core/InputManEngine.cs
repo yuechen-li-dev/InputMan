@@ -26,13 +26,16 @@ public sealed class InputManEngine : IInputMan
 
     // Previous control states (for edge detection)
     private readonly Dictionary<ControlKey, bool> _prevButtons = [];
+    private readonly Dictionary<ControlKey, float> _prevAxes = [];
 
     // Output states
     private readonly Dictionary<ActionId, ActionState> _actions = [];
+    private readonly Dictionary<ActionId, bool> _previousLogicalActions = [];
     private readonly Dictionary<AxisId, float> _axes = [];
 
     // Consumption within the current frame
     private readonly HashSet<ControlKey> _consumedControls = [];
+    private readonly HashSet<ActionId> _consumedActions = [];
     private readonly HashSet<AxisId> _unclampedAxes = [];
 
     // Rebinding Specific section
@@ -48,6 +51,12 @@ public sealed class InputManEngine : IInputMan
     //Updates
     public long FrameIndex { get; private set; }
     public float DeltaTimeSeconds { get; private set; }
+    public InputFrame CurrentFrame { get; private set; } = new(0, 0f,
+        new Dictionary<ActionId, ActionValue>(),
+        new Dictionary<AxisId, float>(),
+        new Dictionary<Axis2Id, Vector2>(),
+        null);
+    public ActiveInputDevice? LastActiveDevice { get; private set; }
     private float _timeSeconds;
 
     public event Action<ActionEvent>? OnAction;
@@ -66,7 +75,9 @@ public sealed class InputManEngine : IInputMan
         DeltaTimeSeconds = deltaTimeSeconds;
         _timeSeconds = timeSeconds;
 
-        // 0. Rebind update. Let rebinding observe raw snapshot each frame
+        bool rebindingThisFrame = _rebind is not null;
+
+        // Rebinding owns the physical candidate frame, even when capture completes on this tick.
         _rebind?.Update(snapshot, _timeSeconds);
 
         if (_activeMapsDirty)
@@ -74,12 +85,26 @@ public sealed class InputManEngine : IInputMan
 
         // 1. Reset per-frame state without allocating new arrays
         foreach (var id in _actions.Keys.ToArray())
-            _actions[id] = _actions[id] with { PressedThisFrame = false, ReleasedThisFrame = false };
+            _actions[id] = new ActionState(false, false, false);
 
         foreach (var id in _axes.Keys.ToArray())
             _axes[id] = 0f;
 
         _consumedControls.Clear();
+        _consumedActions.Clear();
+
+        if (rebindingThisFrame)
+        {
+            UpdateLastActiveDevice(snapshot);
+            foreach (var key in _knownButtonControls)
+            {
+                _prevButtons[key] = snapshot.TryGetButton(key, out var cur) && cur;
+            }
+
+            FinalizeActions();
+            CurrentFrame = CreateFrame();
+            return;
+        }
 
         // 2. Evaluate Map Bindings
         foreach (var active in _activeMapsSorted)
@@ -90,10 +115,13 @@ public sealed class InputManEngine : IInputMan
             foreach (var binding in mapDef.Bindings)
             {
                 var control = binding.Trigger.Control;
-                bool shouldConsume = mapDef.CanConsume && binding.Consume is ConsumeMode.ControlOnly or ConsumeMode.All;
+                bool consumeControl = mapDef.CanConsume && binding.Consume is ConsumeMode.ControlOnly or ConsumeMode.All;
+                bool consumeAction = mapDef.CanConsume && binding.Consume is ConsumeMode.ActionOnly or ConsumeMode.All;
 
-                // Early exit if control is already consumed
-                if (shouldConsume && _consumedControls.Contains(control))
+                if (_consumedControls.Contains(control))
+                    continue;
+
+                if (binding.Output is ActionOutput blockedAction && _consumedActions.Contains(blockedAction.Action))
                     continue;
 
                 if (!TryEvaluateBinding(binding, snapshot, out var actionEvt, out var axisEvt, out var didTrigger))
@@ -114,16 +142,44 @@ public sealed class InputManEngine : IInputMan
                 }
 
                 // 3. Centralized Consumption Logic
-                if (shouldConsume && didTrigger)
+                if (consumeControl && didTrigger)
                     _consumedControls.Add(control);
+                if (consumeAction && didTrigger && binding.Output is ActionOutput consumedAction)
+                    _consumedActions.Add(consumedAction.Action);
             }
         }
+
+
+        FinalizeActions();
+        UpdateLastActiveDevice(snapshot);
 
         // 4. Update previous state for next frame
         foreach (var key in _knownButtonControls)
         {
             _prevButtons[key] = snapshot.TryGetButton(key, out var cur) && cur;
         }
+        CurrentFrame = CreateFrame();
+    }
+
+    public void ResetOnFocusLoss()
+    {
+        FrameIndex++;
+        foreach (var action in _actions.Keys.ToArray())
+        {
+            ActionState state = _actions[action];
+            _actions[action] = new ActionState(false, false, state.Down);
+        }
+
+        foreach (var axis in _axes.Keys.ToArray())
+        {
+            _axes[axis] = 0f;
+        }
+
+        _prevButtons.Clear();
+        _prevAxes.Clear();
+        _previousLogicalActions.Clear();
+        _rebind?.Cancel();
+        CurrentFrame = CreateFrame();
     }
 
     public bool IsDown(ActionId action) => _actions.TryGetValue(action, out var st) && st.Down;
@@ -264,8 +320,10 @@ public sealed class InputManEngine : IInputMan
         ProfileRevision++; //keeps track of revision for rebind.
 
         _actions.Clear();
+        _previousLogicalActions.Clear();
         _axes.Clear();
         _prevButtons.Clear();
+        _prevAxes.Clear();
 
         RebuildKnownControls();
         _activeMapsDirty = true;
@@ -372,17 +430,8 @@ public sealed class InputManEngine : IInputMan
                     _ => false
                 };
 
-                var (newState, phase) = (isPressed, isReleased) switch
-                {
-                    (true, _) => (existing with { Down = true, PressedThisFrame = true }, ActionPhase.Pressed),
-                    (_, true) => (existing with { Down = false, ReleasedThisFrame = true }, ActionPhase.Released),
-                    _ => (existing with { Down = curDown }, (ActionPhase?)null)
-                };
-
-                _actions[ao.Action] = newState;
-                actionEvent = phase.HasValue
-                    ? new ActionEvent(ao.Action, phase.Value, FrameIndex, _timeSeconds)
-                    : null;
+                _actions[ao.Action] = existing with { Down = existing.Down || curDown };
+                actionEvent = null;
 
                 axisEvent = null;
                 return true;
@@ -472,9 +521,98 @@ public sealed class InputManEngine : IInputMan
         }
 
         // 2. Sort in-place to avoid LINQ overhead
-        Array.Sort(_activeMapsSorted, (a, b) => b.ResolvedPriority.CompareTo(a.ResolvedPriority));
+        Array.Sort(_activeMapsSorted, (a, b) =>
+        {
+            int priority = b.ResolvedPriority.CompareTo(a.ResolvedPriority);
+            return priority != 0
+                ? priority
+                : StringComparer.Ordinal.Compare(a.MapId.Name, b.MapId.Name);
+        });
 
         _activeMapsDirty = false;
+    }
+
+    private void UpdateLastActiveDevice(InputSnapshot snapshot)
+    {
+        ActiveInputDevice? changed = null;
+        foreach (var pair in snapshot.Buttons.OrderBy(pair => pair.Key.Device).ThenBy(pair => pair.Key.DeviceIndex).ThenBy(pair => pair.Key.Code))
+        {
+            bool previous = _prevButtons.GetValueOrDefault(pair.Key);
+            if (pair.Value && !previous)
+            {
+                changed = new ActiveInputDevice(pair.Key.Device, pair.Key.DeviceIndex);
+            }
+        }
+
+        foreach (var pair in snapshot.Axes.OrderBy(pair => pair.Key.Device).ThenBy(pair => pair.Key.DeviceIndex).ThenBy(pair => pair.Key.Code))
+        {
+            float previous = _prevAxes.GetValueOrDefault(pair.Key);
+            if (MathF.Abs(pair.Value) > _profile.Options.DefaultAxisEpsilon
+                && MathF.Abs(pair.Value - previous) > _profile.Options.DefaultAxisEpsilon)
+            {
+                changed = new ActiveInputDevice(pair.Key.Device, pair.Key.DeviceIndex);
+            }
+        }
+
+        foreach (ControlKey key in _knownAxisControls)
+        {
+            _prevAxes[key] = snapshot.TryGetAxis(key, out float value) ? value : 0f;
+        }
+
+        if (changed is ActiveInputDevice device)
+        {
+            LastActiveDevice = device;
+        }
+    }
+
+    private void FinalizeActions()
+    {
+        foreach (ActionId action in _actions.Keys.ToArray())
+        {
+            ActionState current = _actions[action];
+            bool previousDown = _previousLogicalActions.GetValueOrDefault(action);
+            bool pressed = !previousDown && current.Down;
+            bool released = previousDown && !current.Down;
+            _actions[action] = current with
+            {
+                PressedThisFrame = pressed,
+                ReleasedThisFrame = released,
+            };
+            _previousLogicalActions[action] = current.Down;
+
+            if (pressed)
+            {
+                OnAction?.Invoke(new ActionEvent(action, ActionPhase.Pressed, FrameIndex, _timeSeconds));
+            }
+            if (released)
+            {
+                OnAction?.Invoke(new ActionEvent(action, ActionPhase.Released, FrameIndex, _timeSeconds));
+            }
+        }
+    }
+
+    private InputFrame CreateFrame()
+    {
+        var actions = new Dictionary<ActionId, ActionValue>(_actions.Count);
+        foreach (var pair in _actions)
+        {
+            actions[pair.Key] = pair.Value.PressedThisFrame
+                ? ActionValue.Pressed
+                : pair.Value.ReleasedThisFrame
+                    ? ActionValue.Released
+                    : pair.Value.Down
+                        ? ActionValue.Held
+                        : ActionValue.Up;
+        }
+
+        var axes = new Dictionary<AxisId, float>(_axes);
+        var axes2 = new Dictionary<Axis2Id, Vector2>(_profile.Axis2.Count);
+        foreach (Axis2Definition definition in _profile.Axis2.Values.OrderBy(value => value.Id.Name, StringComparer.Ordinal))
+        {
+            axes2[definition.Id] = new Vector2(GetAxis(definition.X), GetAxis(definition.Y));
+        }
+
+        return new InputFrame(FrameIndex, DeltaTimeSeconds, actions, axes, axes2, LastActiveDevice);
     }
 
     private static float Clamp(float v, float min, float max)

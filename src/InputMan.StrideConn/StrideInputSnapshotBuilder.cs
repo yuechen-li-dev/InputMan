@@ -73,7 +73,7 @@ public static class StrideInputSnapshotBuilder
     private static bool ReadMouseButton(IStrideInputSource input, in ControlKey key, out bool down)
     {
         // For mouse BUTTONS, code is the Stride.MouseButton enum int.
-        down = input.IsMouseButtonDown((MouseButton)key.Code);
+        down = input.IsMouseButtonDown((Stride.Input.MouseButton)key.Code);
         return true;
     }
 

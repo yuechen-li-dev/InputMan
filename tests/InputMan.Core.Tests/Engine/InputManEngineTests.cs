@@ -42,21 +42,21 @@ public sealed class InputManEngineTests
         im.SetMaps(new ActionMapId("Gameplay"));
 
         // Frame 1: up
-        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = false }), 1/60f, 0f);
+        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = false }), 1 / 60f, 0f);
         Assert.False(im.WasPressed(new ActionId("Jump")));
 
         // Frame 2: press
-        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = true }), 1/60f, 1/60f);
+        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = true }), 1 / 60f, 1 / 60f);
         Assert.True(im.WasPressed(new ActionId("Jump")));
         Assert.True(im.IsDown(new ActionId("Jump")));
 
         // Frame 3: still down (Pressed should be false)
-        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = true }), 1/60f, 2/60f);
+        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = true }), 1 / 60f, 2 / 60f);
         Assert.False(im.WasPressed(new ActionId("Jump")));
         Assert.True(im.IsDown(new ActionId("Jump")));
 
         // Frame 4: release
-        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = false }), 1/60f, 3/60f);
+        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = false }), 1 / 60f, 3 / 60f);
         Assert.True(im.WasReleased(new ActionId("Jump")));
         Assert.False(im.IsDown(new ActionId("Jump")));
     }
@@ -116,7 +116,7 @@ public sealed class InputManEngineTests
         var im = new InputManEngine(profile);
         im.SetMaps(new ActionMapId("Gameplay"), new ActionMapId("UI"));
 
-        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = true }), 1/60f, 0f);
+        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [Space] = true }), 1 / 60f, 0f);
 
         Assert.True(im.WasPressed(new ActionId("UISelect")));
         Assert.False(im.WasPressed(new ActionId("Jump")));
@@ -162,15 +162,15 @@ public sealed class InputManEngineTests
         im.SetMaps(new ActionMapId("Gameplay"));
 
         // Hold W => +1
-        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [W] = true, [S] = false }), 1/60f, 0f);
+        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [W] = true, [S] = false }), 1 / 60f, 0f);
         Assert.Equal(1f, im.GetAxis(moveY));
 
         // Hold W+S => cancels to 0
-        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [W] = true, [S] = true }), 1/60f, 1/60f);
+        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [W] = true, [S] = true }), 1 / 60f, 1 / 60f);
         Assert.Equal(0f, im.GetAxis(moveY));
 
         // Neither => 0
-        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [W] = false, [S] = false }), 1/60f, 2/60f);
+        im.Tick(new InputSnapshot(buttons: new Dictionary<ControlKey, bool> { [W] = false, [S] = false }), 1 / 60f, 2 / 60f);
         Assert.Equal(0f, im.GetAxis(moveY));
     }
 

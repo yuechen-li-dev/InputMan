@@ -8,11 +8,11 @@
     <!-- NuGet package metadata -->
     <IsPackable>true</IsPackable>
     <PackageId>InputMan.Core</PackageId>
-    <Version>0.1.1</Version>
+    <Version>0.2.0</Version>
     <Authors>Yuechen Li</Authors>
     <Company></Company>
 
-    <Description>InputMan is a small, engine-agnostic input mapping library for .NET games: map physical inputs (keyboard/mouse/gamepad) to game actions and axes, layer maps with priorities, support consumption, and enable rebinding + JSON profile persistence.</Description>
+    <Description>Engine-agnostic logical input mapping for .NET games with deterministic frames, contexts, consumption, and rebinding.</Description>
     <PackageTags>input;game;games;stride;rebinding;controls;gamedev</PackageTags>
 
     <!-- Links -->

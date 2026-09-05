@@ -1,9 +1,10 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace InputMan.Core;
 
 /// <summary>
-/// Immutable(ish) input snapshot for a single frame.
+/// Immutable input snapshot for a single frame.
 /// Provide only current values; Core computes edges based on previous frame.
 /// </summary>
 public sealed class InputSnapshot(
@@ -12,8 +13,10 @@ public sealed class InputSnapshot(
 {
     public static readonly InputSnapshot Empty = new();
 
-    private readonly IReadOnlyDictionary<ControlKey, bool> _buttons = buttons ?? new Dictionary<ControlKey, bool>();
-    private readonly IReadOnlyDictionary<ControlKey, float> _axes = axes ?? new Dictionary<ControlKey, float>();
+    private readonly IReadOnlyDictionary<ControlKey, bool> _buttons = new ReadOnlyDictionary<ControlKey, bool>(
+        buttons is null ? new Dictionary<ControlKey, bool>() : new Dictionary<ControlKey, bool>(buttons));
+    private readonly IReadOnlyDictionary<ControlKey, float> _axes = new ReadOnlyDictionary<ControlKey, float>(
+        axes is null ? new Dictionary<ControlKey, float>() : new Dictionary<ControlKey, float>(axes));
 
     public bool TryGetButton(in ControlKey key, out bool down) => _buttons.TryGetValue(key, out down);
     public bool TryGetAxis(in ControlKey key, out float value) => _axes.TryGetValue(key, out value);
