@@ -430,7 +430,11 @@ public sealed class InputManEngine : IInputMan
                     _ => false
                 };
 
-                _actions[ao.Action] = existing with { Down = existing.Down || curDown };
+                _actions[ao.Action] = existing with
+                {
+                    Down = existing.Down || curDown,
+                    PressedThisFrame = existing.PressedThisFrame || isPressed,
+                };
                 actionEvent = null;
 
                 axisEvent = null;
@@ -571,7 +575,9 @@ public sealed class InputManEngine : IInputMan
         {
             ActionState current = _actions[action];
             bool previousDown = _previousLogicalActions.GetValueOrDefault(action);
-            bool pressed = !previousDown && current.Down;
+            // A newly active map can reveal a held control. It is held, not a new press.
+            // Preserve aggregation across bindings while requiring a real effective edge.
+            bool pressed = !previousDown && current.Down && current.PressedThisFrame;
             bool released = previousDown && !current.Down;
             _actions[action] = current with
             {
