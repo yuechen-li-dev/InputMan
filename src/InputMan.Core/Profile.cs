@@ -92,6 +92,19 @@ public sealed class InputOptions
     /// Default is 0.0001. Axis values below this are considered zero.
     /// </remarks>
     public float DefaultAxisEpsilon { get; init; } = 0.0001f;
+
+    /// <summary>
+    /// Controls treated as exclusive modifiers (for example Ctrl, Shift, Alt).
+    /// </summary>
+    /// <remarks>
+    /// Empty by default, which keeps the permissive chord behaviour: a binding fires while at least its
+    /// modifiers are held. When non-empty, a button binding goes down only while the held members of this
+    /// set equal its <see cref="BindingTrigger.Modifiers"/> exactly (the binding's own control excluded),
+    /// so Ctrl+K does not also fire K, and Ctrl+Shift+Z does not also fire Ctrl+Z. Application-style
+    /// shortcut tables want this; game movement chords usually do not. Adapters that distinguish left and
+    /// right modifiers should list both or fold them onto one control.
+    /// </remarks>
+    public List<ControlKey> ExclusiveModifiers { get; init; } = [];
 }
 
 /// <summary>

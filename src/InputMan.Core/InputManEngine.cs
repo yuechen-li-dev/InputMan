@@ -409,12 +409,29 @@ public sealed class InputManEngine : IInputMan
                 }
             }
 
+            // Exclusive modifiers: no extra modifier from the configured set may be held.
+            var exclusive = _profile.Options.ExclusiveModifiers;
+            if (exclusive is { Count: > 0 })
+            {
+                foreach (var modifier in exclusive)
+                {
+                    if (modifier == control || (mods is { Length: > 0 } && Array.IndexOf(mods, modifier) >= 0))
+                        continue;
+                    if (snapshot.TryGetButton(modifier, out var held) && held)
+                        modsDown = false;
+                    if (_prevButtons.TryGetValue(modifier, out var prevHeld) && prevHeld)
+                        prevModsDown = false;
+                }
+            }
+
             // Effective state (control AND modifiers)
             bool curDown = rawDown && modsDown;
             bool prevEffective = prevDown && prevModsDown;
 
             // Edge detection based on effective state transitions
-            bool isPressed = !prevEffective && curDown;
+            // Exclusive (application-style) shortcuts fire only when their own control goes down; releasing
+            // Ctrl while K is still held must not fire K. Permissive chords keep the effective-state edge.
+            bool isPressed = exclusive is { Count: > 0 } ? !prevDown && curDown : !prevEffective && curDown;
             bool isReleased = prevEffective && !curDown;
 
             // ActionOutput
@@ -483,6 +500,8 @@ public sealed class InputManEngine : IInputMan
                     return [t.Control];
                 })
         );
+        // Exclusive modifiers must be tracked across frames even when no binding names them.
+        _knownButtonControls.UnionWith(_profile.Options.ExclusiveModifiers);
 
 
         // 3. Refresh the Axis Controls

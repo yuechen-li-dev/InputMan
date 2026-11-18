@@ -314,7 +314,7 @@ internal sealed class RebindSession(
             return;
         }
 
-        List<(ActionMapDefinition Map, int Index)> conflicts = FindConflicts(newControl);
+        List<(ActionMapDefinition Map, int Index)> conflicts = FindConflicts(newControl, modifiers);
         if (_request.ConflictPolicy == RebindConflictPolicy.Reject && conflicts.Count > 0)
         {
             Complete(new RebindResult
@@ -330,10 +330,11 @@ internal sealed class RebindSession(
             foreach ((ActionMapDefinition conflictMap, int conflictIndex) in conflicts)
             {
                 Binding conflict = conflictMap.Bindings[conflictIndex];
+                // With exclusive modifiers a shortcut is control + modifier set, so a swap moves both.
                 conflictMap.Bindings[conflictIndex] = CopyWithControl(
                     conflict,
                     _originalBinding.Trigger.Control,
-                    conflict.Trigger.Modifiers);
+                    ExclusiveModifiers ? _originalBinding.Trigger.Modifiers : conflict.Trigger.Modifiers);
             }
         }
 
@@ -364,8 +365,15 @@ internal sealed class RebindSession(
     /// Check if control conflicts with another binding IN THE SAME MAP.
     /// Now queries the engine's live profile instead of using stale binding list.
     /// </summary>
-    private List<(ActionMapDefinition Map, int Index)> FindConflicts(ControlKey key)
+    private bool ExclusiveModifiers => _engine.GetCurrentProfile().Options.ExclusiveModifiers.Count > 0;
+
+    /// <remarks>
+    /// Without exclusive modifiers any binding on the same control conflicts (K fires under Ctrl+K).
+    /// With them, only a binding on the same control and the same modifier set conflicts.
+    /// </remarks>
+    private List<(ActionMapDefinition Map, int Index)> FindConflicts(ControlKey key, ControlKey[] modifiers)
     {
+        bool exclusive = ExclusiveModifiers;
         var profile = _engine.GetCurrentProfile();
         var result = new List<(ActionMapDefinition Map, int Index)>();
 
@@ -382,12 +390,19 @@ internal sealed class RebindSession(
             {
                 if (mapDef.Id.Equals(_mapDef.Id) && i == _bindingIndex)
                     continue;
-                if (mapDef.Bindings[i].Trigger.Control.Equals(key))
+                var trigger = mapDef.Bindings[i].Trigger;
+                if (trigger.Control.Equals(key) && (!exclusive || SameSet(trigger.Modifiers, modifiers)))
                     result.Add((mapDef, i));
             }
         }
 
         return result;
+    }
+
+    private static bool SameSet(ControlKey[]? a, ControlKey[]? b)
+    {
+        a ??= []; b ??= [];
+        return a.Length == b.Length && a.All(b.Contains);
     }
 
     private static Binding CopyWithControl(Binding source, ControlKey control, ControlKey[] modifiers)
