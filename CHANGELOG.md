@@ -8,6 +8,8 @@ All notable changes to InputMan will be documented in this file.
 - `KeyboardKey` punctuation and navigation keys (`Comma`, `Period`, `Semicolon`, `Apostrophe`, `Minus`, `Equal`, `Backslash`, `Slash`, brackets, `Grave`, `Backspace`, `Tab`, `Delete`, `Insert`, `Home`, `End`, `PageUp`, `PageDown`, `Number9`, `Number0`, `LeftMeta`, `RightMeta`), using USB HID usage codes like the existing members.
 - `InputOptions.ExclusiveModifiers`: application-style exact chord matching. When set, a button binding fires only while exactly its modifiers (from that set) are held, and only on its own control's press edge, so `Ctrl+K` no longer also fires `K` and releasing `Ctrl` while holding `K` fires nothing. Empty by default, so existing profiles keep permissive chords.
 
+- `RebindResult.AttemptedControl`, `AttemptedModifiers` and `ConflictingBindings`, so a rebind UI can say which command already owns a rejected shortcut.
+
 ### Changed
 - With exclusive modifiers, rebinding conflict checks compare control and modifier set together (`K` and `Ctrl+K` do not conflict), and `ReplaceExisting` swaps the whole shortcut.
 

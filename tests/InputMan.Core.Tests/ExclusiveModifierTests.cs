@@ -137,8 +137,11 @@ public sealed class ExclusiveModifierTests
         engine.Tick(InputSnapshot.Empty, 0, 0);
         engine.Tick(new InputSnapshot(new Dictionary<ControlKey, bool> { [Ctrl] = true }), 0, 1);
         engine.Tick(new InputSnapshot(new Dictionary<ControlKey, bool> { [Ctrl] = true, [Z] = true }), 0, 2);
-        // Ctrl+Z is taken by Undo: rejected even though plain Z is free.
+        // Ctrl+Z is taken by Undo: rejected even though plain Z is free, and the result names the owner.
         Assert.False(result!.Succeeded);
+        Assert.Equal(["Undo"], result.ConflictingBindings);
+        Assert.Equal(Z, result.AttemptedControl);
+        Assert.Equal([Ctrl], result.AttemptedModifiers!);
     }
 
     [Fact]

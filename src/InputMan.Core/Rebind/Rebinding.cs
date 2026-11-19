@@ -64,6 +64,13 @@ public sealed class RebindResult
     public string? Error { get; init; }
     public ControlKey? BoundControl { get; init; }
     public IReadOnlyList<ControlKey>? BoundModifiers { get; init; }
+
+    /// <summary>The captured control, also set when the capture was rejected.</summary>
+    public ControlKey? AttemptedControl { get; init; }
+    /// <summary>The captured chord modifiers, also set when the capture was rejected.</summary>
+    public IReadOnlyList<ControlKey>? AttemptedModifiers { get; init; }
+    /// <summary>Names of the bindings that already use the captured shortcut, when rejected for a conflict.</summary>
+    public IReadOnlyList<string> ConflictingBindings { get; init; } = [];
 }
 
 public interface IRebindSession
@@ -320,7 +327,10 @@ internal sealed class RebindSession(
             Complete(new RebindResult
             {
                 Succeeded = false,
-                Error = "That control is already bound in this map."
+                Error = "That control is already bound in this map.",
+                AttemptedControl = newControl,
+                AttemptedModifiers = modifiers,
+                ConflictingBindings = [.. conflicts.Select(c => c.Map.Bindings[c.Index].Name)],
             });
             return;
         }
@@ -351,7 +361,7 @@ internal sealed class RebindSession(
         // Rebuild known controls so edge tracking includes the newly bound control
         _engine.RebuildKnownControlsFromRebind();
 
-        Complete(new RebindResult { Succeeded = true, BoundControl = newControl, BoundModifiers = modifiers });
+        Complete(new RebindResult { Succeeded = true, BoundControl = newControl, BoundModifiers = modifiers, AttemptedControl = newControl, AttemptedModifiers = modifiers });
     }
 
     private void Complete(RebindResult result)
